@@ -419,7 +419,17 @@ dl,dd{margin:0;}
 
 /* ================= OUTRAS TELAS ================= */
 .meta-card{display:flex;flex-direction:column;gap:14px;}
-.meta-numeros{display:grid;grid-template-columns:1fr 1fr;gap:9px 20px;}
+/* Números da meta em uma coluna (rótulo à esquerda, valor à direita): em duas colunas os
+   valores de 5–6 dígitos encostavam na borda do card. */
+.meta-numeros{display:flex;flex-direction:column;}
+.meta-numeros div{align-items:baseline;padding:9px 0;border-bottom:1px solid var(--linha);}
+.meta-numeros div:last-child{border-bottom:none;}
+.meta-numeros dt{white-space:nowrap;}
+.meta-numeros dd{white-space:nowrap;text-align:right;}
+.meta-card .cartao-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0;}
+.meta-card .cartao-acoes .btn{width:100%;}
+.meta-card .cartao-acoes .btn:first-child{grid-column:1/-1;}
+.meta-card .grupo-nome strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .form-linha{margin-bottom:16px;}
 .progresso-meta{display:flex;flex-direction:column;gap:7px;font-size:.82rem;color:var(--suave);font-weight:600;}
 .progresso-meta .barra-trilho{height:16px;}
@@ -517,7 +527,6 @@ dl,dd{margin:0;}
   .saldo-valor strong{font-size:1.9rem;}
   .lanc-total strong{font-size:1.8rem;}
   .lanc-acoes{width:100%;}
-  .meta-numeros{grid-template-columns:1fr;}
   .cartoes-grid,.metas-grid{grid-template-columns:1fr;}
   .form-actions-right{width:100%;margin-left:0;}
   .form-actions-right .btn,.form-actions > .btn{width:100%;}
