@@ -20,11 +20,10 @@
       const fat = auto + ajuste;
       const uso = c.limite > 0 ? fat / c.limite : 0;
       return `<article class="cartao-card">
-        <div class="cartao-visual">
-          <div class="cartao-linha"><span class="cartao-nome">${UI.esc(c.nome)}</span><span class="cartao-bandeira">${UI.esc(c.bandeira || '')}</span></div>
-          <div class="cartao-fatura"><span>Fatura de ${STORE.nomeMes(m)}</span><strong>${UI.brl(fat)}</strong></div>
-          <div class="barra-trilho is-escuro"><div class="barra-cheia${uso > .8 ? ' is-alerta' : ''}" style="width:${Math.min(100, uso * 100)}%"></div></div>
-          <div class="cartao-linha cartao-rodape"><span>${c.limite > 0 ? `${UI.pct(uso)} de ${UI.brl(c.limite)}` : 'Sem limite cadastrado'}</span><span>${c.vencimento ? `vence dia ${c.vencimento}` : ''}</span></div>
+        ${UI.cartaoHTML(c, { rotulo: `Fatura de ${STORE.nomeMes(m)}`, valor: UI.brl(fat) })}
+        <div class="cartao-uso">
+          <div class="cartao-uso-topo"><span>${c.limite > 0 ? `${UI.pct(uso)} de ${UI.brl(c.limite)}` : 'Sem limite cadastrado'}</span><span>${c.vencimento ? `vence dia ${c.vencimento}` : ''}</span></div>
+          <div class="barra-trilho"><div class="barra-cheia${uso > .8 ? ' is-alerta' : ''}" style="width:${Math.min(100, uso * 100)}%"></div></div>
         </div>
         <dl class="cartao-detalhe">
           <div><dt>Gastos lançados</dt><dd>${UI.brl(auto)}</dd></div>
@@ -63,15 +62,22 @@
 
   function abrirForm(cartao) {
     const novo = !cartao;
-    const c = cartao || { id: STORE.uid('car'), nome: '', bandeira: '', limite: '', vencimento: '' };
+    const c = cartao || { id: STORE.uid('car'), nome: '', bandeira: '', limite: '', vencimento: '', final: '', titular: '', estilo: '' };
+    const estiloAtual = UI.estiloDoCartao(c);
     const janela = UI.modal({
+      largo: true,
       titulo: novo ? 'Novo cartão' : 'Editar cartão',
       html: `<form novalidate>
         <div class="form-grid">
           <label class="field"><span>Nome do cartão</span><input name="nome" maxlength="40" placeholder="Ex.: Nubank" value="${UI.esc(c.nome)}" required></label>
-          <label class="field"><span>Banco / bandeira</span><input name="bandeira" maxlength="40" placeholder="Ex.: Mastercard" value="${UI.esc(c.bandeira)}"></label>
+          <label class="field"><span>Banco / bandeira</span><input name="bandeira" maxlength="40" placeholder="Ex.: Visa Gold, Mastercard" value="${UI.esc(c.bandeira)}"></label>
           <label class="field"><span>Limite (R$)</span><input name="limite" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00" value="${UI.num2(c.limite)}"></label>
           <label class="field"><span>Dia do vencimento</span><input name="vencimento" inputmode="numeric" maxlength="2" placeholder="Ex.: 10" value="${c.vencimento || ''}"></label>
+          <label class="field"><span>Final do cartão (opcional)</span><input name="final" inputmode="numeric" maxlength="4" placeholder="Ex.: 2734" value="${UI.esc(c.final || '')}"></label>
+          <label class="field"><span>Titular</span><select name="titular"><option value="">—</option>${STORE.dados.pessoas.map(p => `<option value="${p.id}"${p.id === c.titular ? ' selected' : ''}>${UI.esc(p.nome)}</option>`).join('')}</select></label>
+        </div>
+        <div class="field" style="margin-top:16px"><span>Visual do cartão</span>
+          <div class="estilos-cartao">${UI.ESTILOS.map(e => `<label class="estilo-opcao"><input type="radio" name="estilo" value="${e.id}"${e.id === estiloAtual ? ' checked' : ''}>${UI.cartaoHTML({ ...c, nome: c.nome || e.nome, estilo: e.id }, { valor: '' })}<span>${e.nome}</span></label>`).join('')}</div>
         </div>
         <p class="auth-msg" data-erro></p>
         <div class="form-actions">
@@ -87,7 +93,9 @@
       const venc = parseInt(form.vencimento.value, 10);
       if (!nome) { form.querySelector('[data-erro]').textContent = 'Dê um nome ao cartão.'; return; }
       if (form.vencimento.value && !(venc >= 1 && venc <= 31)) { form.querySelector('[data-erro]').textContent = 'Dia de vencimento inválido.'; return; }
-      Object.assign(c, { nome, bandeira: form.bandeira.value.trim(), limite: UI.lerValor(form.limite.value), vencimento: venc || '' });
+      const final = form.final.value.replace(/D/g, '');
+      if (final && final.length !== 4) { form.querySelector('[data-erro]').textContent = 'O final do cartão tem 4 dígitos.'; return; }
+      Object.assign(c, { nome, bandeira: form.bandeira.value.trim(), limite: UI.lerValor(form.limite.value), vencimento: venc || '', final, titular: form.titular.value, estilo: (form.querySelector('[name=estilo]:checked') || {}).value || '' });
       if (novo) STORE.dados.cartoes.push(c);
       STORE.salvar();
       janela.fechar();

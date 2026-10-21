@@ -3,18 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#111214">
+<meta name="theme-color" content="#e6e6e9">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>Lançamentos | Finanças</title>
-<script src="js/config.js?v=2"></script>
-<script src="js/auth.js?v=2"></script>
+<script src="js/config.js?v=3"></script>
+<script src="js/auth.js?v=3"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=2"></script>
-<script src="js/sidebar.js?v=2"></script>
-<link rel="stylesheet" href="css/style.css?v=2">
-<link rel="stylesheet" href="css/financeiro.css?v=2">
-<script src="js/store.js?v=2"></script>
-<script src="js/layout.js?v=2"></script>
+<script src="js/theme.js?v=3"></script>
+<link rel="stylesheet" href="css/app.css?v=3">
+<script src="js/store.js?v=3"></script>
+<script src="js/layout.js?v=3"></script>
 <script>
   /* Uma tela para os três tipos (as três abas de lançamento da planilha). */
   window.TIPO = ({ receita: 'receita', fixo: 'fixo', variavel: 'variavel' })[new URLSearchParams(location.search).get('tipo')] || 'variavel';
@@ -56,6 +54,6 @@
   </main>
 </div>
 <button type="button" class="fab" id="fabNovo" aria-label="Novo lançamento"><svg class="icon"><use href="#i-mais"/></svg></button>
-<script src="js/lancamentos.js?v=2"></script>
+<script src="js/lancamentos.js?v=3"></script>
 </body>
 </html>

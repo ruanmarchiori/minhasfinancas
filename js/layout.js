@@ -1,8 +1,9 @@
-/* Partes comuns a todas as telas: ícones, menu lateral, barra do topo (com o seletor do mês
-   de referência), formatação de dinheiro, aviso (toast) e janela (modal).
+/* Partes comuns a todas as telas: ícones, cabeçalho, menu (pílula escura vertical no
+   computador; pílula flutuante embaixo no celular), título da página com o seletor do mês de
+   referência, formatação de dinheiro, aviso (toast) e janela (modal).
 
-   O menu e a barra são escritos com document.write enquanto a página carrega — assim
-   aparecem já prontos, sem piscar, e o sidebar.js encontra os botões no DOMContentLoaded. */
+   Cabeçalho, menu e título são escritos com document.write enquanto a página carrega — assim
+   aparecem prontos, sem piscar. */
 const UI = (function () {
   const ICONES = {
     home: '<path d="M4 11.5 12 4l8 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 19v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
@@ -27,7 +28,12 @@ const UI = (function () {
     planilha: '<rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 9h16M4 15h16M10 3v18" fill="none" stroke="currentColor" stroke-width="1.6"/>',
     olho: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>',
     olhoFechado: '<path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a15.7 15.7 0 0 1-3.2 4.1M6.2 6.8C3.7 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 3.4-.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
-    seta: '<path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+    seta: '<path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+    sol: '<circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    lua: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+    grade: '<rect x="4" y="4" width="6.5" height="6.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+    logo: '<path d="M5 19V9.5a5.5 5.5 0 0 1 5.5-5.5H19v4.5h-8a1.5 1.5 0 0 0-1.5 1.5V19z" fill="currentColor"/><path d="M12 12.5h6v4h-6z" fill="currentColor"/>',
+    diamante: '<path d="M6 4h12l3 5-9 11L3 9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 9h18M9 4l3 16 3-16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'
   };
 
   const MENU = [
@@ -42,6 +48,7 @@ const UI = (function () {
     { id: 'configuracoes', href: 'configuracoes.html', icone: 'engrenagem', nome: 'Configurações' }
   ];
 
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const ico = (nome, classe) => `<svg class="${classe || 'icon'}" aria-hidden="true"><use href="#i-${nome}"/></svg>`;
 
   function sprite() {
@@ -49,31 +56,61 @@ const UI = (function () {
       Object.entries(ICONES).map(([n, p]) => `<symbol id="i-${n}" viewBox="0 0 24 24">${p}</symbol>`).join('') + '</svg>';
   }
 
-  /* Menu lateral (gaveta no celular). */
+  const link = (i, ativo) => `<a href="${i.href}" class="nav-link${i.id === ativo ? ' active' : ''}"${i.id === ativo ? ' aria-current="page"' : ''} aria-label="${i.nome}">${ico(i.icone)}<span class="dica-nav">${i.nome}</span></a>`;
+
+  /* Cabeçalho + menu. No celular o menu vira uma pílula embaixo com os atalhos principais e
+     um botão "Mais" que abre as outras telas. */
   function sidebar(ativo) {
+    const principais = ['painel', 'receita', 'variavel', 'cartoes'];
+    const nome = (STORE.dados.pessoas[0] || { nome: '' }).nome;
     document.write(sprite() + `
+      <header class="cabecalho">
+        <a class="marca" href="index.html" aria-label="Início">
+          <span class="marca-logo">${ico('logo')}</span>
+          <span class="marca-texto"><small>Controle financeiro</small><strong>Finanças</strong></span>
+        </a>
+        <div class="cabecalho-acoes">
+          <button type="button" class="btn-redondo" id="btnTema" aria-label="Alternar modo escuro">${ico(window.THEME && THEME.get() === 'dark' ? 'sol' : 'lua')}</button>
+          <a class="btn-redondo so-desktop" href="configuracoes.html" aria-label="Configurações">${ico('engrenagem')}</a>
+          <span class="avatar" title="${esc(nome)}">${esc(nome.slice(0, 1).toUpperCase() || 'R')}</span>
+        </div>
+      </header>
       <aside class="sidebar">
-        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Recolher menu">${ico('chevron', 'icon-sm')}</button>
-        <div class="brand"><div class="brand-mark">R$</div><span class="brand-name">Finanças</span></div>
-        <nav class="nav-group">
-          ${MENU.map(i => `<a href="${i.href}" class="nav-link${i.id === ativo ? ' active' : ''}"${i.id === ativo ? ' aria-current="page"' : ''}>${ico(i.icone)}<span>${i.nome}</span></a>`).join('')}
-        </nav>
-        <div class="nav-spacer"></div>
-        <button class="nav-link nav-logout" id="logoutBtn">${ico('sair')}<span>Sair</span></button>
+        <nav class="pilula" aria-label="Menu">${MENU.filter(i => i.id !== 'configuracoes').map(i => link(i, ativo)).join('')}</nav>
+        <div class="pilula">
+          ${link(MENU.find(i => i.id === 'configuracoes'), ativo)}
+          <button type="button" class="nav-link" id="logoutBtn" aria-label="Sair">${ico('sair')}<span class="dica-nav">Sair</span></button>
+        </div>
       </aside>
-      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>`);
+      <nav class="nav-baixo" aria-label="Menu">
+        ${MENU.filter(i => principais.includes(i.id)).map(i => link(i, ativo)).join('')}
+        <button type="button" class="nav-link${principais.includes(ativo) ? '' : ' active'}" id="btnMais" aria-label="Mais telas">${ico('grade')}</button>
+      </nav>`);
   }
 
-  /* Barra do topo; com {mes:true} mostra o seletor do mês de referência. */
+  /* Folha com todas as telas (botão "Mais" do celular). */
+  function abrirMais() {
+    const j = modal({
+      titulo: 'Menu',
+      html: `<div class="mais-grade">${MENU.map(i => `<a href="${i.href}" class="mais-item">${ico(i.icone)}<span>${i.nome}</span></a>`).join('')}
+        <button type="button" class="mais-item is-sair" data-sair>${ico('sair')}<span>Sair</span></button></div>`
+    });
+    j.el.querySelector('[data-sair]').addEventListener('click', () => AUTH.logout());
+  }
+
+  /* Título da página; {mes:true} mostra o seletor do mês de referência, {sub} um subtítulo,
+     {pessoas:true} as bolinhas das pessoas da casa (no lugar dos avatares da referência). */
+  const CORES_PESSOA = ['#c9d4f2', '#efe3a6', '#f0c4c4', '#cfe8d8', '#e3d3f2'];
   function topbar(titulo, opcoes) {
     const o = opcoes || {};
     document.write(`
       <div class="topbar">
         <div class="topbar-title">
-          <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menu">${ico('menu')}</button>
           <h1>${titulo}</h1>
+          ${o.sub ? `<p>${o.sub}</p>` : ''}
         </div>
         <div class="topbar-actions">
+          ${o.pessoas ? `<div class="pessoas-pilula" title="Pessoas da casa">${STORE.dados.pessoas.map((p, i) => `<span class="pessoa-bolha" style="background:${CORES_PESSOA[i % CORES_PESSOA.length]}" title="${esc(p.nome)}">${esc(p.nome.slice(0, 1).toUpperCase())}</span>`).join('')}</div>` : ''}
           ${o.mes ? `<div class="mes-seletor" role="group" aria-label="Mês de referência">
             <button type="button" class="mes-btn" id="mesAnterior" aria-label="Mês anterior">${ico('chevron', 'icon-sm')}</button>
             <label class="mes-atual"><span id="mesTexto"></span><input type="month" id="mesInput" aria-label="Escolher mês"></label>
@@ -127,8 +164,6 @@ const UI = (function () {
     try { el.setSelectionRange(el.value.length, el.value.length); } catch (err) { /* alguns tipos não deixam */ }
   }, true); /* captura: formata antes das telas lerem o valor */
 
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
   function toast(msg) {
     const el = document.getElementById('toast');
     if (!el) { alert(msg); return; }
@@ -165,11 +200,76 @@ const UI = (function () {
 
   function confirmar(texto) { return window.confirm(texto); }
 
-  /* Botão Sair (em todas as telas). */
+  /* ===== Desenho do cartão =====
+     Visuais inspirados nos cartões de verdade (Nubank roxo, Ourocard amarelo do BB, Smiles Gold
+     dourado) — com o nome escrito, sem reproduzir logotipos. O visual vem de c.estilo ou é
+     deduzido do nome do cartão. */
+  const ESTILOS = [
+    { id: 'nubank', nome: 'Nubank' },
+    { id: 'ourocard', nome: 'Ourocard' },
+    { id: 'smiles', nome: 'Smiles Gold' },
+    { id: 'azul', nome: 'Azul' },
+    { id: 'grafite', nome: 'Grafite' }
+  ];
+  function estiloDoCartao(c) {
+    if (c.estilo && ESTILOS.some(e => e.id === c.estilo)) return c.estilo;
+    const n = (c.nome + ' ' + (c.bandeira || '')).toLowerCase();
+    if (/smiles/.test(n)) return 'smiles';
+    if (/nu|nubank/.test(n)) return 'nubank';
+    if (/ourocard|banco do brasil|bb/.test(n)) return 'ourocard';
+    return 'azul';
+  }
+  function bandeiraDoCartao(c, estilo) {
+    const b = (c.bandeira || '').toLowerCase();
+    if (/master/.test(b)) return 'master';
+    if (/visa/.test(b)) return 'visa';
+    if (/elo/.test(b)) return 'elo';
+    if (/amex|american/.test(b)) return 'amex';
+    return estilo === 'nubank' ? 'master' : estilo === 'azul' || estilo === 'grafite' ? 'master' : 'visa';
+  }
+  function marcaBandeira(tipo) {
+    if (tipo === 'master') return '<span class="cc-master" aria-label="Mastercard"><i></i><i></i></span>';
+    if (tipo === 'elo') return '<span class="cc-elo">elo</span>';
+    if (tipo === 'amex') return '<span class="cc-elo">AMEX</span>';
+    return '<span class="cc-visa">VISA</span>';
+  }
+  /* o: { rotulo, valor } — o que aparece embaixo à esquerda (ex.: "Fatura de Jul" + valor). */
+  function cartaoHTML(c, o) {
+    const op = o || {};
+    const estilo = estiloDoCartao(c);
+    const nivel = (/(gold|platinum|black|infinite|ultravioleta|grafite)/i.exec(c.bandeira || '') || [])[1];
+    const emissor = {
+      nubank: 'nu',
+      ourocard: 'Ourocard<small>Banco do Brasil</small>',
+      smiles: 'smiles<small>Banco do Brasil</small>'
+    }[estilo] || esc(c.nome);
+    const tag = estilo === 'smiles' ? (nivel || 'Gold') : (nivel || (estilo === 'nubank' ? '' : ''));
+    const titular = c.titular ? (STORE.pessoa(c.titular) || {}).nome : '';
+    return `<div class="cc cc-${estilo}" role="img" aria-label="Cartão ${esc(c.nome)}">
+      <div class="cc-topo"><span class="cc-emissor">${emissor}</span><span class="cc-tag">${esc(tag || '')}</span></div>
+      <div class="cc-chip"></div>
+      <div class="cc-numero">•••• •••• •••• ${esc(c.final || '••••')}</div>
+      <div class="cc-base">
+        <div class="cc-info">${op.rotulo ? `<small>${esc(op.rotulo)}</small>` : ''}<strong>${op.valor !== undefined ? esc(op.valor) : esc(titular || c.nome)}</strong></div>
+        <span class="cc-bandeira">${marcaBandeira(bandeiraDoCartao(c, estilo))}</span>
+      </div>
+    </div>`;
+  }
+
+  /* Sair, tema e "Mais" (em todas as telas). */
   document.addEventListener('DOMContentLoaded', () => {
     const sair = document.getElementById('logoutBtn');
     if (sair) sair.addEventListener('click', () => AUTH.logout());
+    const mais = document.getElementById('btnMais');
+    if (mais) mais.addEventListener('click', abrirMais);
+    const tema = document.getElementById('btnTema');
+    if (tema) tema.addEventListener('click', () => {
+      const escuro = THEME.get() !== 'dark';
+      THEME.set(escuro ? 'dark' : 'light');
+      tema.innerHTML = ico(escuro ? 'sol' : 'lua');
+      document.dispatchEvent(new Event('temamudou'));
+    });
   });
 
-  return { ico, sidebar, topbar, ligarMes, brl, pct, lerValor, num2, esc, toast, modal, confirmar, MENU };
+  return { ico, sidebar, topbar, ligarMes, brl, pct, lerValor, num2, esc, toast, modal, confirmar, MENU, cartaoHTML, ESTILOS, estiloDoCartao };
 })();

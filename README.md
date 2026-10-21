@@ -4,8 +4,12 @@ Controle financeiro pessoal/familiar feito a partir da **PLANILHA.xlsx** (Dashbo
 Gastos Fixos, Gastos Variáveis, Cartões de Crédito, Reserva e Poupança, Metas de Longo Prazo e
 Educação Financeira). Funciona no computador e no celular.
 
-**HTML, CSS e JavaScript puros** — sem build, sem servidor. Mesma base visual e de login do
-Controle WebHub (pasta `Sistema Pessoal`).
+**HTML, CSS e JavaScript puros** — sem build, sem servidor e sem biblioteca de gráficos (os
+gráficos são desenhados em HTML/SVG). Login reaproveitado do Controle WebHub (pasta
+`Sistema Pessoal`); a identidade visual é própria: fundo cinza-claro, painéis arredondados,
+menu em pílula escura (no celular, uma pílula flutuante embaixo), destaque azul-lavanda e
+amarelo, e cartões desenhados como os de verdade (Nubank, Ourocard, Smiles Gold, Azul, Grafite —
+escolhidos no cadastro do cartão ou deduzidos pelo nome).
 
 ## Onde ficam os dados
 
@@ -62,12 +66,12 @@ Compras Inesperadas) viram a descrição "Agropet — Ração" na categoria do b
 
 ```
 *.html               telas
-css/style.css        base visual (copiada do Controle WebHub)
-css/financeiro.css   componentes deste sistema
+css/app.css          todo o visual (tema claro e escuro)
 js/config.js         conta de acesso
 js/auth.js           login (modo local do Controle WebHub, chaves sf_*)
 js/store.js          dados + todos os cálculos (totais, faturas, reserva, metas)
-js/layout.js         menu, barra do topo, seletor de mês, ícones, modal, formatação
+js/layout.js         cabeçalho, menu, título com seletor de mês, ícones, modal, formatação,
+                     campos de dinheiro e o desenho dos cartões
 js/planilha.js       importação da PLANILHA.xlsx
 js/<tela>.js         lógica de cada tela
 ```
