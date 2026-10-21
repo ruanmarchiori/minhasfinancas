@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111214">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Educação financeira | Finanças</title>
+<script src="js/config.js?v=1"></script>
+<script src="js/auth.js?v=1"></script>
+<script>AUTH.requireAuth();</script>
+<script src="js/theme.js?v=1"></script>
+<script src="js/sidebar.js?v=1"></script>
+<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/financeiro.css?v=1">
+<script src="js/store.js?v=1"></script>
+<script src="js/layout.js?v=1"></script>
+</head>
+<body>
+<div class="app">
+  <script>UI.sidebar('educacao');</script>
+  <main class="main">
+    <script>UI.topbar('Educação financeira');</script>
+
+    <section class="grid-2 grid-2-igual">
+      <div class="panel">
+        <div class="panel-head"><h3>Calculadora 1 — quanto guardar por mês</h3></div>
+        <form class="form-grid calc" id="calc1" novalidate>
+          <label class="field"><span>Valor da meta (R$)</span><input name="meta" inputmode="decimal" value="20.000,00"></label>
+          <label class="field"><span>Prazo (meses)</span><input name="prazo" inputmode="numeric" value="24"></label>
+          <label class="field"><span>Rendimento mensal (%)</span><input name="taxa" inputmode="decimal" value="0,5"></label>
+          <label class="field"><span>Valor já guardado (R$)</span><input name="guardado" inputmode="decimal" value="2.000,00"></label>
+        </form>
+        <div class="calc-resultado"><span>Aporte mensal necessário</span><strong id="res1">—</strong><small id="res1Sub"></small></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Calculadora 2 — em quanto tempo atinjo a meta</h3></div>
+        <form class="form-grid calc" id="calc2" novalidate>
+          <label class="field"><span>Valor da meta (R$)</span><input name="meta" inputmode="decimal" value="20.000,00"></label>
+          <label class="field"><span>Aporte mensal (R$)</span><input name="aporte" inputmode="decimal" value="500,00"></label>
+          <label class="field"><span>Rendimento mensal (%)</span><input name="taxa" inputmode="decimal" value="0,5"></label>
+          <label class="field"><span>Valor já guardado (R$)</span><input name="guardado" inputmode="decimal" value="2.000,00"></label>
+        </form>
+        <div class="calc-resultado"><span>Prazo necessário</span><strong id="res2">—</strong><small id="res2Sub"></small></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Seus números</h3><span class="panel-sub" id="seusSub"></span></div>
+      <div class="resumo-grid" id="seusNumeros"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Dicas de educação financeira</h3></div>
+      <ol class="dicas">
+        <li><strong>Regra 50/30/20:</strong> destine até 50% da renda para gastos essenciais (moradia, contas), 30% para desejos e 20% para poupança/investimentos e quitação de dívidas.</li>
+        <li><strong>Reserva de emergência:</strong> mantenha de 3 a 6 meses do seu custo de vida guardado em uma aplicação de alta liquidez, para imprevistos.</li>
+        <li><strong>Juros compostos:</strong> quanto antes você começar a guardar, menor o esforço mensal necessário para atingir uma meta — o tempo é o maior aliado do investidor.</li>
+        <li><strong>Evite o rotativo do cartão de crédito:</strong> os juros costumam superar 300% ao ano; priorize pagar a fatura integral todo mês.</li>
+        <li><strong>Antes de uma dívida de longo prazo</strong> (financiamento de carro, casa), verifique se a parcela não ultrapassa 30% da sua renda líquida.</li>
+        <li><strong>Revise seus gastos variáveis mensalmente:</strong> pequenos cortes recorrentes (assinaturas não usadas, delivery) geram grande economia acumulada no ano.</li>
+      </ol>
+    </section>
+  </main>
+</div>
+<script src="js/educacao.js?v=1"></script>
+</body>
+</html>

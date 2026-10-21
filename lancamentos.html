@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111214">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Lançamentos | Finanças</title>
+<script src="js/config.js?v=1"></script>
+<script src="js/auth.js?v=1"></script>
+<script>AUTH.requireAuth();</script>
+<script src="js/theme.js?v=1"></script>
+<script src="js/sidebar.js?v=1"></script>
+<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/financeiro.css?v=1">
+<script src="js/store.js?v=1"></script>
+<script src="js/layout.js?v=1"></script>
+<script>
+  /* Uma tela para os três tipos (as três abas de lançamento da planilha). */
+  window.TIPO = ({ receita: 'receita', fixo: 'fixo', variavel: 'variavel' })[new URLSearchParams(location.search).get('tipo')] || 'variavel';
+  window.TITULO = { receita: 'Receitas', fixo: 'Gastos fixos', variavel: 'Gastos variáveis' }[TIPO];
+  document.title = TITULO + ' | Finanças';
+</script>
+</head>
+<body>
+<div class="app">
+  <script>UI.sidebar(TIPO);</script>
+  <main class="main">
+    <script>UI.topbar(TITULO, { mes: true });</script>
+
+    <section class="lanc-topo">
+      <div class="lanc-total">
+        <span class="lanc-total-rotulo" id="totalRotulo">Total do mês</span>
+        <strong id="totalValor">—</strong>
+        <span class="lanc-total-sub" id="totalSub"></span>
+      </div>
+      <div class="lanc-acoes">
+        <div class="scope-toggle" role="tablist" aria-label="Visão">
+          <button type="button" class="scope-btn active" data-visao="mes" role="tab" aria-selected="true">Mês</button>
+          <button type="button" class="scope-btn" data-visao="ano" role="tab" aria-selected="false">Ano</button>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" id="btnRepetir" hidden>
+          <svg class="icon-sm"><use href="#i-repetir"/></svg><span id="btnRepetirTxt">Repetir do mês anterior</span>
+        </button>
+        <button type="button" class="btn btn-lime" id="btnNovo"><svg class="icon-sm"><use href="#i-mais"/></svg><span id="btnNovoTxt">Novo</span></button>
+      </div>
+    </section>
+
+    <section id="visaoMes"></section>
+    <section id="visaoAno" hidden>
+      <div class="panel">
+        <div class="panel-head"><h3 id="anoTitulo"></h3><span class="panel-sub">Toque num valor para abrir o mês</span></div>
+        <div class="report-table-wrap"><table class="report-table tabela-ano" id="tabelaAno"></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+<button type="button" class="fab" id="fabNovo" aria-label="Novo lançamento"><svg class="icon"><use href="#i-mais"/></svg></button>
+<script src="js/lancamentos.js?v=1"></script>
+</body>
+</html>

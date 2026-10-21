@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111214">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Cartões | Finanças</title>
+<script src="js/config.js?v=1"></script>
+<script src="js/auth.js?v=1"></script>
+<script>AUTH.requireAuth();</script>
+<script src="js/theme.js?v=1"></script>
+<script src="js/sidebar.js?v=1"></script>
+<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/financeiro.css?v=1">
+<script src="js/store.js?v=1"></script>
+<script src="js/layout.js?v=1"></script>
+</head>
+<body>
+<div class="app">
+  <script>UI.sidebar('cartoes');</script>
+  <main class="main">
+    <script>UI.topbar('Cartões', { mes: true });</script>
+
+    <section class="lanc-topo">
+      <div class="lanc-total">
+        <span class="lanc-total-rotulo" id="totalRotulo">Total em faturas</span>
+        <strong id="totalValor">—</strong>
+        <span class="lanc-total-sub" id="totalSub"></span>
+      </div>
+      <div class="lanc-acoes">
+        <button type="button" class="btn btn-lime" id="btnNovo"><svg class="icon-sm"><use href="#i-mais"/></svg>Novo cartão</button>
+      </div>
+    </section>
+
+    <p class="nota">A fatura do mês soma automaticamente os gastos (fixos e variáveis) pagos com cada cartão. Use o <strong>ajuste</strong> para o que não foi lançado (juros, anuidade, compra de outra pessoa…).</p>
+
+    <section class="cartoes-grid" id="cartoes"></section>
+
+    <section class="panel">
+      <div class="panel-head"><h3 id="anoTitulo">Faturas do ano</h3><span class="panel-sub">Cartões + Pix, Dinheiro e Débito</span></div>
+      <div class="report-table-wrap"><table class="report-table tabela-ano" id="tabelaAno"></table></div>
+    </section>
+  </main>
+</div>
+<script src="js/cartoes.js?v=1"></script>
+</body>
+</html>

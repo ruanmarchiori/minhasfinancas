@@ -1,0 +1,11 @@
+# Dados financeiros pessoais — nunca vão para o Git (o repositório do GitHub Pages é público).
+*.xlsx
+*.xls
+*.csv
+*.backup.json
+
+# Lixo de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
