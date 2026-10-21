@@ -70,7 +70,7 @@
         <div class="form-grid">
           <label class="field"><span>Nome do cartão</span><input name="nome" maxlength="40" placeholder="Ex.: Nubank" value="${UI.esc(c.nome)}" required></label>
           <label class="field"><span>Banco / bandeira</span><input name="bandeira" maxlength="40" placeholder="Ex.: Mastercard" value="${UI.esc(c.bandeira)}"></label>
-          <label class="field"><span>Limite (R$)</span><input name="limite" inputmode="decimal" placeholder="0,00" value="${c.limite ? String(c.limite).replace('.', ',') : ''}"></label>
+          <label class="field"><span>Limite (R$)</span><input name="limite" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00" value="${UI.num2(c.limite)}"></label>
           <label class="field"><span>Dia do vencimento</span><input name="vencimento" inputmode="numeric" maxlength="2" placeholder="Ex.: 10" value="${c.vencimento || ''}"></label>
         </div>
         <p class="auth-msg" data-erro></p>
@@ -111,15 +111,18 @@
     const janela = UI.modal({
       titulo: `Ajuste da fatura — ${c.nome}`,
       html: `<form novalidate>
-        <p class="nota">Valor somado à fatura de <strong>${STORE.nomeMes(m, true)}</strong> além dos gastos lançados. Use valor negativo para descontar (estorno, por exemplo).</p>
-        <label class="field"><span>Ajuste (R$)</span><input name="valor" inputmode="decimal" placeholder="0,00" value="${atual ? String(atual).replace('.', ',') : ''}"></label>
+        <p class="nota">Valor que entra na fatura de <strong>${STORE.nomeMes(m, true)}</strong> além dos gastos lançados (juros, anuidade, estorno…). Deixe vazio para tirar o ajuste.</p>
+        <div class="form-grid">
+          <label class="field"><span>Ajuste (R$)</span><input name="valor" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00" value="${UI.num2(Math.abs(atual))}"></label>
+          <label class="field"><span>Tipo</span><select name="sinal"><option value="1"${atual >= 0 ? ' selected' : ''}>Somar à fatura</option><option value="-1"${atual < 0 ? ' selected' : ''}>Descontar da fatura</option></select></label>
+        </div>
         <div class="form-actions"><div class="form-actions-right"><button type="submit" class="btn btn-lime">Salvar ajuste</button></div></div>
       </form>`
     });
     const form = janela.el.querySelector('form');
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      STORE.setAjusteFatura(c.id, m, UI.lerValor(form.valor.value));
+      STORE.setAjusteFatura(c.id, m, UI.lerValor(form.valor.value) * Number(form.sinal.value));
       STORE.salvar();
       janela.fechar();
       render();

@@ -6,15 +6,15 @@
 <meta name="theme-color" content="#111214">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>Reserva | Finanças</title>
-<script src="js/config.js?v=1"></script>
-<script src="js/auth.js?v=1"></script>
+<script src="js/config.js?v=2"></script>
+<script src="js/auth.js?v=2"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=1"></script>
-<script src="js/sidebar.js?v=1"></script>
-<link rel="stylesheet" href="css/style.css?v=1">
-<link rel="stylesheet" href="css/financeiro.css?v=1">
-<script src="js/store.js?v=1"></script>
-<script src="js/layout.js?v=1"></script>
+<script src="js/theme.js?v=2"></script>
+<script src="js/sidebar.js?v=2"></script>
+<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/financeiro.css?v=2">
+<script src="js/store.js?v=2"></script>
+<script src="js/layout.js?v=2"></script>
 </head>
 <body>
 <div class="app">
@@ -44,7 +44,7 @@
     <section class="panel">
       <div class="panel-head"><h3>Meta e rendimento</h3></div>
       <form class="form-grid form-linha" id="formConfig" novalidate>
-        <label class="field"><span>Meta da reserva (R$)</span><input name="meta" inputmode="decimal"></label>
+        <label class="field"><span>Meta da reserva (R$)</span><input name="meta" inputmode="numeric" data-dinheiro autocomplete="off"></label>
         <label class="field"><span>Rendimento mensal (%)</span><input name="rendimento" inputmode="decimal"><span class="field-hint">Ex.: 0,5 (≈ poupança). 1% ao mês ≈ 12,7% ao ano.</span></label>
       </form>
       <div class="progresso-meta"><div class="barra-trilho"><div class="barra-cheia is-verde" id="barraMeta"></div></div><span id="faltaMeta"></span></div>
@@ -56,6 +56,6 @@
     </section>
   </main>
 </div>
-<script src="js/reserva.js?v=1"></script>
+<script src="js/reserva.js?v=2"></script>
 </body>
 </html>

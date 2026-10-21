@@ -29,7 +29,7 @@
         const futuro = l.mes > hoje;
         return `<tr class="${futuro ? 'is-projecao' : ''}${l.mes === m ? ' is-atual' : ''}">
           <td class="col-nome">${STORE.MESES_LONGOS[Number(l.mes.slice(5)) - 1]}${futuro ? ' <span class="tag">projeção</span>' : ''}</td>
-          <td class="num"><input class="input-tabela" inputmode="decimal" data-mes="${l.mes}" value="${l.aporte ? String(l.aporte).replace('.', ',') : ''}" placeholder="0,00" aria-label="Aporte de ${STORE.nomeMes(l.mes, true)}"></td>
+          <td class="num"><input class="input-tabela" inputmode="numeric" data-dinheiro autocomplete="off" data-mes="${l.mes}" value="${UI.num2(l.aporte)}" placeholder="0,00" aria-label="Aporte de ${STORE.nomeMes(l.mes, true)}"></td>
           <td class="num">${UI.brl(l.rendimento)}</td>
           <td class="num forte">${UI.brl(l.saldo)}</td>
           <td class="num">${UI.pct(l.pctMeta)}</td>

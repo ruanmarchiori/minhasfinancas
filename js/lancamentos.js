@@ -163,7 +163,7 @@
     const nomeTipo = { receita: 'receita', fixo: 'gasto fixo', variavel: 'gasto variável' }[TIPO];
     const html = `<form class="form-lanc" novalidate>
       <label class="field campo-valor"><span>Valor (R$)</span>
-        <input name="valor" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${l.valor !== '' ? String(l.valor).replace('.', ',') : ''}" required>
+        <input name="valor" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00" value="${UI.num2(l.valor)}" required>
       </label>
       <label class="field"><span>${RECEITA ? 'Descrição (opcional)' : 'Descrição / onde'}</span>
         <input name="descricao" maxlength="80" placeholder="${RECEITA ? 'Ex.: salário empresa X' : 'Ex.: Supermercado Extra Bom'}" value="${UI.esc(l.descricao)}">

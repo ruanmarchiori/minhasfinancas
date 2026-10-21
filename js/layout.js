@@ -104,13 +104,29 @@ const UI = (function () {
   const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const brl = (v) => fmtBRL.format(Number(v) || 0);
   const pct = (v, casas) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'percent', minimumFractionDigits: casas ?? 1, maximumFractionDigits: casas ?? 1 });
-  /* Aceita "1.234,56", "1234.56", "R$ 10" — o que a pessoa digitar no celular. */
+  /* Aceita "1.234,56", "1.500" (ponto de milhar), "1234.56", "R$ 10". */
   function lerValor(txt) {
     let s = String(txt || '').replace(/[^\d,.-]/g, '');
     if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
     const n = parseFloat(s);
     return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
   }
+  /* Valor para preencher um campo de dinheiro: 1500 → "1.500,00"; 0/vazio → "". */
+  const num2 = (v) => (Number(v) ? Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '');
+
+  /* Campos de dinheiro (data-dinheiro) funcionam como app de banco: só se digitam números e os
+     centavos entram pela direita (1 → 0,01 · 150000 → 1.500,00). Assim não há como confundir
+     ponto e vírgula, e o teclado do celular mostra só números. Vale para campos criados depois
+     (janelas), porque o evento é escutado no documento. */
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (!el.matches || !el.matches('input[data-dinheiro]')) return;
+    const digitos = el.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 13);
+    el.value = digitos ? (Number(digitos) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+    try { el.setSelectionRange(el.value.length, el.value.length); } catch (err) { /* alguns tipos não deixam */ }
+  }, true); /* captura: formata antes das telas lerem o valor */
+
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function toast(msg) {
@@ -155,5 +171,5 @@ const UI = (function () {
     if (sair) sair.addEventListener('click', () => AUTH.logout());
   });
 
-  return { ico, sidebar, topbar, ligarMes, brl, pct, lerValor, esc, toast, modal, confirmar, MENU };
+  return { ico, sidebar, topbar, ligarMes, brl, pct, lerValor, num2, esc, toast, modal, confirmar, MENU };
 })();

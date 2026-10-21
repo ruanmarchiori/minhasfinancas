@@ -55,8 +55,8 @@
           <label class="field field-full"><span>Meta</span><input name="nome" maxlength="60" placeholder="Ex.: Projeto energia solar" value="${UI.esc(m.nome)}"></label>
           <label class="field"><span>Categoria</span><select name="categoria">${STORE.CATEGORIAS_META.map(c => `<option${c === m.categoria ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
           <label class="field"><span>Data de início</span><input type="date" name="dataInicio" value="${m.dataInicio || ''}"></label>
-          <label class="field"><span>Valor total (R$)</span><input name="valorTotal" inputmode="decimal" placeholder="0,00" value="${m.valorTotal ? String(m.valorTotal).replace('.', ',') : ''}"></label>
-          <label class="field"><span>Entrada (R$)</span><input name="entrada" inputmode="decimal" placeholder="0,00" value="${m.entrada ? String(m.entrada).replace('.', ',') : ''}"></label>
+          <label class="field"><span>Valor total (R$)</span><input name="valorTotal" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00" value="${UI.num2(m.valorTotal)}"></label>
+          <label class="field"><span>Entrada (R$)</span><input name="entrada" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00" value="${UI.num2(m.entrada)}"></label>
         </div>
         <p class="auth-msg" data-erro></p>
         <div class="form-actions">
@@ -98,7 +98,7 @@
       html: `<form novalidate>
         <p class="nota">Saldo devedor atual: <strong>${UI.brl(c.saldoDevedor)}</strong></p>
         <div class="form-grid">
-          <label class="field"><span>Valor pago (R$)</span><input name="valor" inputmode="decimal" placeholder="0,00"></label>
+          <label class="field"><span>Valor pago (R$)</span><input name="valor" inputmode="numeric" data-dinheiro autocomplete="off" placeholder="0,00"></label>
           <label class="field"><span>Data</span><input type="date" name="data" value="${hoje}"></label>
         </div>
         <p class="auth-msg" data-erro></p>
