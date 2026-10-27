@@ -200,6 +200,29 @@ const UI = (function () {
 
   function confirmar(texto) { return window.confirm(texto); }
 
+  /* Salva um arquivo de texto (backup). No celular usa a folha de compartilhar — no iPhone é o
+     jeito de gravar em "Arquivos"/iCloud ou mandar por WhatsApp/e-mail. Devolve false se a pessoa
+     cancelar, para quem chamou não seguir adiante (ex.: não apagar o ano sem backup). */
+  async function salvarArquivo(nome, texto) {
+    const tipo = 'application/json';
+    const movel = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (movel && navigator.canShare && typeof File !== 'undefined') {
+      const arq = new File([texto], nome, { type: tipo });
+      if (navigator.canShare({ files: [arq] })) {
+        try { await navigator.share({ files: [arq], title: nome }); return true; }
+        catch (e) { if (e && e.name === 'AbortError') return false; /* outro erro: tenta baixar */ }
+      }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([texto], { type: tipo }));
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    return true;
+  }
+
   /* ===== Desenho do cartão =====
      Visuais inspirados nos cartões de verdade (Nubank roxo, Ourocard amarelo do BB, Smiles Gold
      dourado) — com o nome escrito, sem reproduzir logotipos. O visual vem de c.estilo ou é
@@ -271,5 +294,5 @@ const UI = (function () {
     });
   });
 
-  return { ico, sidebar, topbar, ligarMes, brl, pct, lerValor, num2, esc, toast, modal, confirmar, MENU, cartaoHTML, ESTILOS, estiloDoCartao };
+  return { ico, sidebar, topbar, ligarMes, brl, pct, lerValor, num2, esc, toast, modal, confirmar, salvarArquivo, MENU, cartaoHTML, ESTILOS, estiloDoCartao };
 })();

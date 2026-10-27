@@ -79,6 +79,34 @@ js/<tela>.js         lógica de cada tela
 As chaves do localStorage começam com `sf_` para não misturar com o Controle WebHub — os
 sites do GitHub Pages de uma mesma conta compartilham o mesmo armazenamento no navegador.
 
+## Instalar no iPhone (app, sem GitHub)
+
+O sistema é um **app instalável** (PWA): `manifest.webmanifest` + `sw.js` (guarda todos os
+arquivos no aparelho e abre sem internet) + ícones em `icones/`. Os **dados ficam só no
+iPhone** — a hospedagem serve apenas o código.
+
+1. `node ferramentas/preparar-publicacao.js` → cria a pasta `../Financas-para-publicar` só com os
+   arquivos do app (sem planilha nem backups).
+2. Publicar essa pasta em qualquer hospedagem com HTTPS. Sem GitHub: **Netlify Drop**
+   (app.netlify.com/drop) — criar conta grátis e arrastar a pasta.
+3. No iPhone, abrir o link no **Safari** → Compartilhar → **Adicionar à Tela de Início**.
+4. Abrir pelo ícone. A partir daí funciona offline.
+
+Ao mudar o código: subir `VERSAO` no `sw.js` e o `?v=` dos HTML, gerar a pasta de novo e
+arrastar outra vez no Netlify (Deploys → arrastar). O app atualiza sozinho na próxima abertura com
+internet — os dados não são afetados.
+
+**Cuidado:** se o app for apagado da tela de início, os dados vão junto. Use Configurações →
+**Salvar backup** (no iPhone abre "Salvar em Arquivos"/WhatsApp/e-mail).
+
+## Fechar o ano
+
+Configurações → **Fechar o ano** (e um aviso no Painel quando o ano anterior ainda tem
+lançamentos): salva `financas-AAAA.backup.json` e só então apaga os **dados mensais** daquele
+ano (receitas, gastos fixos/variáveis, ajustes de fatura). Ficam: cartões, metas (com
+pagamentos), reserva (aportes e saldo), pessoas e categorias. Importar esse arquivo em Backup
+**junta** os lançamentos do ano de volta, sem apagar o ano atual.
+
 ## Publicar (GitHub Pages)
 
 Repositório público → Settings → Pages → Branch `main` / `(root)`. Ao mudar CSS/JS, aumente o

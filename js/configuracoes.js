@@ -99,10 +99,49 @@
   function renderInfo() {
     const d = D();
     const kb = Math.round(JSON.stringify(d).length / 1024);
-    document.getElementById('infoDados').textContent = `${d.lancamentos.length} lançamento(s), ${d.cartoes.length} cartão(ões), ${d.metas.length} meta(s) · ${kb} KB guardados neste navegador.`;
+    const ult = d.config.ultimoBackup ? new Date(d.config.ultimoBackup).toLocaleDateString('pt-BR') : 'nunca';
+    document.getElementById('infoDados').textContent = `${d.lancamentos.length} lançamento(s), ${d.cartoes.length} cartão(ões), ${d.metas.length} meta(s) · ${kb} KB neste aparelho · último backup: ${ult}.`;
   }
 
-  function renderTudo() { renderPessoas(); renderCategorias(); renderInfo(); }
+  function textoBackup(extra) {
+    return JSON.stringify(Object.assign({ app: 'sistema-financeiro', exportadoEm: new Date().toISOString(), dados: D() }, extra || {}), null, 2);
+  }
+
+  /* ===== Fechar o ano ===== */
+  function renderFechar() {
+    const el = document.getElementById('fecharAno');
+    const anos = STORE.anosComLancamentos();
+    const atual = new Date().getFullYear();
+    if (!anos.length) { el.innerHTML = '<p class="vazio-curto">Nenhum lançamento para fechar.</p>'; return; }
+    el.innerHTML = `<div class="linha-add">
+        <select id="anoFechar" aria-label="Ano">${anos.map(a => `<option value="${a}"${a === (STORE.anoParaFechar() || anos[0]) ? ' selected' : ''}>${a}${a === atual ? ' (ano atual)' : ''}</option>`).join('')}</select>
+        <button type="button" class="btn btn-primary btn-sm" id="btnFechar">Fechar o ano</button>
+      </div>
+      <p class="field-hint" id="fecharInfo"></p>`;
+    const sel = document.getElementById('anoFechar');
+    const info = () => {
+      const a = Number(sel.value);
+      const n = D().lancamentos.filter(l => STORE.anoDe(l.mes) === a).length;
+      document.getElementById('fecharInfo').textContent = `${a}: ${n} lançamento(s) serão apagados depois de salvar o arquivo.`;
+    };
+    sel.addEventListener('change', info);
+    info();
+    document.getElementById('btnFechar').addEventListener('click', async () => {
+      const a = Number(sel.value);
+      const n = D().lancamentos.filter(l => STORE.anoDe(l.mes) === a).length;
+      if (a === atual && !UI.confirmar(`${a} ainda não terminou. Fechar mesmo assim?`)) return;
+      if (!UI.confirmar(`Fechar ${a}?\n\n1) Vou salvar o arquivo financas-${a}.backup.json (guarde-o).\n2) Depois apago os ${n} lançamento(s) de ${a}.\n\nCartões, metas e reserva continuam.`)) return;
+      const salvo = await UI.salvarArquivo(`financas-${a}.backup.json`, textoBackup({ anoFechado: a }));
+      if (!salvo) { UI.toast('Arquivo não salvo — nada foi apagado.'); return; }
+      if (!UI.confirmar(`O arquivo de ${a} foi salvo? Toque em OK para apagar os lançamentos de ${a}.`)) { UI.toast('Nada foi apagado.'); return; }
+      const apagados = STORE.fecharAno(a);
+      STORE.setMesRef(STORE.hojeMes());
+      renderTudo();
+      UI.toast(`${a} fechado: ${apagados} lançamento(s) apagados. Bom ano novo!`);
+    });
+  }
+
+  function renderTudo() { renderPessoas(); renderCategorias(); renderInfo(); renderFechar(); }
 
   document.addEventListener('DOMContentLoaded', () => {
     renderTudo();
@@ -139,13 +178,9 @@
     tema.checked = THEME.get() === 'dark';
     tema.addEventListener('change', () => THEME.set(tema.checked ? 'dark' : 'light'));
 
-    document.getElementById('baixarBackup').addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify({ app: 'sistema-financeiro', exportadoEm: new Date().toISOString(), dados: D() }, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `financas-${new Date().toISOString().slice(0, 10)}.backup.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    document.getElementById('baixarBackup').addEventListener('click', async () => {
+      const ok = await UI.salvarArquivo(`financas-${new Date().toISOString().slice(0, 10)}.backup.json`, textoBackup());
+      if (ok) { D().config.ultimoBackup = new Date().toISOString(); STORE.salvar(); renderInfo(); }
     });
     document.getElementById('arquivoBackup').addEventListener('change', async (e) => {
       const f = e.target.files[0];
@@ -155,6 +190,23 @@
         const json = JSON.parse(await f.text());
         const dados = json && json.dados ? json.dados : json;
         if (!dados || !Array.isArray(dados.lancamentos)) throw new Error('Este arquivo não é um backup deste sistema.');
+        /* Arquivo de um ano fechado: junta só os lançamentos daquele ano, sem apagar o resto. */
+        if (json.anoFechado) {
+          const ano = Number(json.anoFechado);
+          const ids = new Set(D().lancamentos.map(l => l.id));
+          const doAno = dados.lancamentos.filter(l => STORE.anoDe(l.mes) === ano && !ids.has(l.id));
+          if (!UI.confirmar(`Trazer de volta ${doAno.length} lançamento(s) de ${ano}? Os dados atuais continuam.`)) return;
+          /* pessoas/categorias/cartões removidos depois do fechamento voltam, para os nomes aparecerem */
+          ['pessoas', 'categorias', 'cartoes'].forEach((k) => (dados[k] || []).forEach((x) => { if (!D()[k].some(y => y.id === x.id)) D()[k].push(x); }));
+          D().lancamentos.push(...doAno);
+          Object.entries(dados.ajustesFatura || {}).forEach(([id, meses]) => Object.entries(meses).forEach(([m, v]) => {
+            if (STORE.anoDe(m) === ano) { D().ajustesFatura[id] = D().ajustesFatura[id] || {}; D().ajustesFatura[id][m] = v; }
+          }));
+          STORE.salvar();
+          renderTudo();
+          UI.toast(`${ano} trazido de volta (${doAno.length} lançamentos).`);
+          return;
+        }
         if (!UI.confirmar(`Substituir os dados deste navegador pelo backup (${dados.lancamentos.length} lançamentos)?`)) return;
         STORE.substituirTudo(dados);
         renderTudo();
@@ -181,6 +233,6 @@
       UI.toast('Dados apagados.');
     });
 
-    if (location.hash === '#importar') document.getElementById('importar').scrollIntoView();
+    if (location.hash === '#importar' || location.hash === '#fechar') document.getElementById(location.hash.slice(1)).scrollIntoView();
   });
 })();

@@ -2,23 +2,35 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#e6e6e9">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Painel | Finanças</title>
-<script src="js/config.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
+<script src="js/config.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=4"></script>
-<link rel="stylesheet" href="css/app.css?v=4">
-<script src="js/store.js?v=4"></script>
-<script src="js/layout.js?v=4"></script>
+<script src="js/theme.js?v=5"></script>
+<script src="js/pwa.js?v=5"></script>
+<link rel="stylesheet" href="css/app.css?v=5">
+<script src="js/store.js?v=5"></script>
+<script src="js/layout.js?v=5"></script>
 </head>
 <body>
 <div class="app">
   <script>UI.sidebar('painel');</script>
   <main class="main">
     <script>UI.topbar(`Olá, <em>${UI.esc((STORE.dados.pessoas[0] || { nome: '' }).nome)}</em>`, { mes: true, pessoas: true, sub: 'Veja e controle suas finanças aqui!' });</script>
+
+    <div class="aviso-vazio aviso-ano" id="avisoAno" hidden>
+      <div><strong id="avisoAnoTitulo"></strong><span>Salve o arquivo do ano e comece o ano novo zerado — cartões, metas e reserva continuam.</span></div>
+      <div class="aviso-acoes"><a class="btn btn-primary btn-sm" href="configuracoes.html#fechar" id="avisoAnoBtn">Fechar o ano</a></div>
+    </div>
 
     <div class="aviso-vazio" id="avisoVazio" hidden>
       <div>
@@ -113,6 +125,6 @@
     </section>
   </main>
 </div>
-<script src="js/painel.js?v=4"></script>
+<script src="js/painel.js?v=5"></script>
 </body>
 </html>

@@ -186,6 +186,9 @@
   }
 
   function render(m) {
+    const fechar = STORE.anoParaFechar();
+    $('avisoAno').hidden = !fechar;
+    if (fechar) { $('avisoAnoTitulo').textContent = `${fechar} terminou — hora de fechar o ano.`; $('avisoAnoBtn').textContent = `Fechar ${fechar}`; }
     $('avisoVazio').hidden = STORE.doMes(m).length > 0;
     saldo(m); cartoes(m); medidor(m); ultimos(m); despesasReceitas(m); categorias(m); pessoas(m); graficoAno(m); resumo(m);
   }

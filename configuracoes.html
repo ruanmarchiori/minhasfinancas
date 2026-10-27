@@ -2,18 +2,25 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#e6e6e9">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Configurações | Finanças</title>
-<script src="js/config.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
+<script src="js/config.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=4"></script>
-<link rel="stylesheet" href="css/app.css?v=4">
-<script src="js/store.js?v=4"></script>
-<script src="js/layout.js?v=4"></script>
-<script src="js/planilha.js?v=4"></script>
+<script src="js/theme.js?v=5"></script>
+<script src="js/pwa.js?v=5"></script>
+<link rel="stylesheet" href="css/app.css?v=5">
+<script src="js/store.js?v=5"></script>
+<script src="js/layout.js?v=5"></script>
+<script src="js/planilha.js?v=5"></script>
 </head>
 <body>
 <div class="app">
@@ -57,12 +64,18 @@
       </form>
     </section>
 
+    <section class="panel" id="fechar">
+      <div class="panel-head"><h3>Fechar o ano</h3></div>
+      <p class="nota">Salva um arquivo com o ano inteiro e apaga <strong>só os dados mensais</strong> desse ano (receitas, gastos fixos e variáveis, ajustes de fatura). Continuam: <strong>cartões, metas, reserva</strong>, pessoas e categorias. Para rever o ano depois, importe o arquivo em Backup.</p>
+      <div id="fecharAno"></div>
+    </section>
+
     <section class="grid-2 grid-2-igual">
       <div class="panel">
         <div class="panel-head"><h3>Backup</h3></div>
-        <p class="nota">Os dados ficam <strong>neste navegador</strong>. Para usar em outro aparelho (ex.: do computador para o celular), baixe o backup aqui e importe lá.</p>
+        <p class="nota">Os dados ficam <strong>só neste aparelho</strong>. Se o app for apagado, eles vão junto — salve um backup de vez em quando (no iPhone: “Salvar em Arquivos” ou envie para você mesmo).</p>
         <div class="botoes-linha">
-          <button type="button" class="btn btn-primary btn-sm" id="baixarBackup"><svg class="icon-sm"><use href="#i-baixar"/></svg>Baixar backup</button>
+          <button type="button" class="btn btn-primary btn-sm" id="baixarBackup"><svg class="icon-sm"><use href="#i-baixar"/></svg>Salvar backup</button>
           <label class="btn btn-outline btn-sm arquivo-btn"><svg class="icon-sm"><use href="#i-subir"/></svg><span>Importar backup</span><input type="file" id="arquivoBackup" accept=".json,application/json" hidden></label>
         </div>
         <p class="field-hint" id="infoDados"></p>
@@ -85,6 +98,6 @@
     </section>
   </main>
 </div>
-<script src="js/configuracoes.js?v=4"></script>
+<script src="js/configuracoes.js?v=5"></script>
 </body>
 </html>

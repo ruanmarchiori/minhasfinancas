@@ -313,8 +313,33 @@ const STORE = (function () {
     return dados.lancamentos.filter(l => l[campo] === id).length;
   }
 
+  /* ===== Fechar o ano =====
+     Apaga só os dados mensais do ano (receitas, gastos fixos/variáveis e ajustes de fatura).
+     Mantém pessoas, categorias, cartões, metas (com pagamentos) e a reserva (aportes e saldo
+     continuam correndo no ano novo). O backup do ano é salvo antes, pela tela. */
+  function anosComLancamentos() {
+    return [...new Set(dados.lancamentos.map(l => anoDe(l.mes)))].sort();
+  }
+  /* Ano anterior ao atual que ainda tem lançamentos (para o aviso de janeiro). */
+  function anoParaFechar() {
+    const atual = anoDe(hojeMes());
+    const fechados = dados.config.anosFechados || [];
+    return anosComLancamentos().filter(a => a < atual && !fechados.includes(a))[0] || null;
+  }
+  function fecharAno(ano) {
+    const antes = dados.lancamentos.length;
+    dados.lancamentos = dados.lancamentos.filter(l => anoDe(l.mes) !== ano);
+    Object.keys(dados.ajustesFatura).forEach((id) => {
+      Object.keys(dados.ajustesFatura[id]).forEach((m) => { if (anoDe(m) === ano) delete dados.ajustesFatura[id][m]; });
+    });
+    dados.config.anosFechados = [...new Set([...(dados.config.anosFechados || []), ano])].sort();
+    salvar();
+    return antes - dados.lancamentos.length;
+  }
+
   return {
     get dados() { return dados; },
+    anosComLancamentos, anoParaFechar, fecharAno,
     salvar, substituirTudo, normalizar, uid,
     TIPOS_RECEITA, RENDA_FIXA, FORMAS_FIXAS, CATEGORIAS_META, MESES_CURTOS, MESES_LONGOS,
     mesRef, setMesRef, somarMes, anoDe, mesesDoAno, nomeMes, hojeMes,

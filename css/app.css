@@ -297,6 +297,7 @@ dl,dd{margin:0;}
 .aviso-vazio strong{display:block;font-size:.95rem;}
 .aviso-vazio span{font-size:.84rem;color:var(--suave);}
 .aviso-acoes{display:flex;gap:8px;flex-wrap:wrap;}
+.aviso-ano{border-style:solid;border-color:var(--amarelo);background:var(--amarelo-claro);}
 .aviso-inline{background:var(--amarelo-claro);color:var(--tinta);border-radius:14px;padding:12px 16px;font-size:.84rem;}
 .aviso-ok{background:var(--verde-claro);color:var(--verde);border-radius:14px;padding:13px 16px;font-weight:700;font-size:.9rem;}
 .aviso-ok a{text-decoration:underline;}
@@ -491,6 +492,10 @@ dl,dd{margin:0;}
 .auth-form{display:flex;flex-direction:column;gap:16px;}
 .auth-submit{width:100%;margin-top:6px;}
 .auth-msg{font-size:.84rem;text-align:center;min-height:18px;color:var(--vermelho);font-weight:600;margin:0;}
+
+/* App instalado no iPhone: o conteúdo começa abaixo da barra de status/ilha. */
+.modo-app .cabecalho{padding-top:max(14px, env(safe-area-inset-top));}
+.modo-app .auth-page{padding-top:max(20px, env(safe-area-inset-top));}
 
 /* ================= RESPONSIVO ================= */
 @media (max-width:1200px){
