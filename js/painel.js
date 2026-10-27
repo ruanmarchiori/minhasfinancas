@@ -33,7 +33,7 @@
     const desp = ult.map(x => STORE.totais(x).despesas);
     const topo = Math.max(...desp, 1);
     $('pilulasDespesas').innerHTML = ult.map((x, i) => `<div class="pilula-col${x === m ? ' is-atual' : ''}" title="Despesas de ${STORE.nomeMes(x, true)}: ${UI.brl(desp[i])}">
-      <div class="pilula-barra" style="height:${Math.max(10, (desp[i] / topo) * 78)}%"></div><span>${STORE.MESES_CURTOS[Number(x.slice(5)) - 1]}</span></div>`).join('');
+      <div class="pilula-barra" style="height:${desp[i] ? `max(12px, ${(desp[i] / topo) * 100}%)` : '8px'}"></div><span>${STORE.MESES_CURTOS[Number(x.slice(5)) - 1]}</span></div>`).join('');
   }
 
   /* ----- Cartão em destaque (carrossel) + Pix/Dinheiro/Débito ----- */
