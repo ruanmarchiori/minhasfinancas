@@ -195,15 +195,15 @@
       </div>` : ''}
       ${l.parcela ? `<p class="aviso-inline">Parcela <strong>${l.parcela.n} de ${l.parcela.de}</strong> de uma compra de ${UI.brl(l.parcela.total)}. Alterações valem só para esta parcela.</p>` : ''}
       <div class="form-grid">
-        <label class="field"><span>${!RECEITA && novo ? 'Mês (da 1ª parcela, se parcelado)' : 'Mês'}</span><input type="month" name="mes" value="${l.mes}" required></label>
+        <label class="field"><span>${!RECEITA && novo ? 'Mês (da fatura da 1ª parcela lançada)' : 'Mês'}</span><input type="month" name="mes" value="${l.mes}" required></label>
         <label class="field"><span>Dia (opcional)</span><input name="dia" inputmode="numeric" maxlength="2" placeholder="—" value="${l.dia || ''}"></label>
       </div>
       <p class="auth-msg" data-erro></p>
       <div class="form-actions">
         ${novo ? '' : `<div class="botoes-excluir"><button type="button" class="btn btn-danger" data-excluir>${UI.ico('lixo', 'icon-sm')} Excluir${l.parcela ? ' esta' : ''}</button>${l.parcela && l.parcela.n < l.parcela.de ? '<button type="button" class="btn btn-danger" data-excluir-proximas>Excluir esta e as próximas</button>' : ''}</div>`}
         <div class="form-actions-right">
-          ${novo ? '<button type="submit" class="btn btn-outline" data-outro>Salvar e lançar outro</button>' : ''}
           <button type="submit" class="btn btn-lime">${novo ? 'Salvar' : 'Salvar alterações'}</button>
+          ${novo ? '<button type="button" class="btn btn-outline" data-outro>Salvar e lançar outro</button>' : ''}
         </div>
       </div>
     </form>`;
@@ -246,10 +246,17 @@
     if (cx) form.addEventListener('input', resumoParcelas);
     if (cx) form.addEventListener('change', resumoParcelas);
 
+    /* "Salvar" é o botão padrão (Enter / "Ir" do teclado salva e fecha). "Salvar e lançar outro"
+       é um botão comum que dispara o envio com a marcação. */
     let lancarOutro = false;
-    form.querySelectorAll('button[type=submit]').forEach(b => b.addEventListener('click', () => { lancarOutro = b.hasAttribute('data-outro'); }));
+    let enviando = false;
+    const outro = form.querySelector('[data-outro]');
+    if (outro) outro.addEventListener('click', () => { lancarOutro = true; form.requestSubmit(); });
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      if (enviando) return;
+      const pedirOutro = lancarOutro;
+      lancarOutro = false;
       const valor = UI.lerValor(form.valor.value);
       const dia = parseInt(form.dia.value, 10);
       if (!(valor > 0)) { erro.textContent = 'Informe um valor maior que zero.'; form.valor.focus(); return; }
@@ -266,18 +273,25 @@
         const p = parcelamento();
         if (!(p.de >= 2 && p.de <= 99)) { erro.textContent = 'Número de parcelas: de 2 a 99.'; return; }
         if (!(p.ini >= 1 && p.ini <= p.de)) { erro.textContent = `“Estou na parcela” vai de 1 a ${p.de}.`; return; }
-        const criados = STORE.lancarParcelado(salvo, p.de, p.ini, Math.round(p.total * 100) / 100);
+        const total = Math.round(p.total * 100) / 100;
+        const igual = STORE.compraParecida(salvo, p.de, total, STORE.somarMes(salvo.mes, 1 - p.ini));
+        if (igual && !UI.confirmar(`Essa compra já está lançada: “${igual.descricao || 'sem descrição'}” em ${igual.de}x de ${UI.brl(igual.valorParcela)} (${STORE.nomeMes(igual.inicio)} a ${STORE.nomeMes(igual.fim)}).\n\nLançar de novo mesmo assim?`)) return;
+        enviando = true;
+        const criados = STORE.lancarParcelado(salvo, p.de, p.ini, total);
         janela.fechar();
         render();
         UI.toast(`${criados.length} parcela${criados.length > 1 ? 's' : ''} de ${UI.brl(p.porParcela)} lançada${criados.length > 1 ? 's' : ''} até ${STORE.nomeMes(criados[criados.length - 1].mes)}.`);
-        if (lancarOutro) abrirForm(null);
+        if (pedirOutro) abrirForm(null);
         return;
       }
+      const igualSimples = novo ? STORE.lancamentoParecido(salvo) : null;
+      if (igualSimples && !UI.confirmar(`Já existe um lançamento igual em ${STORE.nomeMes(salvo.mes)}: “${igualSimples.descricao || nomeTipo}” de ${UI.brl(igualSimples.valor)}.\n\nLançar de novo mesmo assim?`)) return;
+      enviando = true;
       STORE.salvarLancamento(salvo);
       janela.fechar();
       render();
       UI.toast(novo ? `Lançado: ${UI.brl(valor)}${salvo.mes !== STORE.mesRef() ? ' em ' + STORE.nomeMes(salvo.mes) : ''}` : 'Alterações salvas.');
-      if (lancarOutro) abrirForm(null);
+      if (pedirOutro) abrirForm(null);
     });
     const excProx = form.querySelector('[data-excluir-proximas]');
     if (excProx) excProx.addEventListener('click', () => {

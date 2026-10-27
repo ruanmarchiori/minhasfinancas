@@ -12,14 +12,14 @@
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Cartões | Finanças</title>
-<script src="js/config.js?v=8"></script>
-<script src="js/auth.js?v=8"></script>
+<script src="js/config.js?v=9"></script>
+<script src="js/auth.js?v=9"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=8"></script>
-<script src="js/pwa.js?v=8"></script>
-<link rel="stylesheet" href="css/app.css?v=8">
-<script src="js/store.js?v=8"></script>
-<script src="js/layout.js?v=8"></script>
+<script src="js/theme.js?v=9"></script>
+<script src="js/pwa.js?v=9"></script>
+<link rel="stylesheet" href="css/app.css?v=9">
+<script src="js/store.js?v=9"></script>
+<script src="js/layout.js?v=9"></script>
 </head>
 <body>
 <div class="app">
@@ -43,9 +43,14 @@
     <section class="cartoes-grid" id="cartoes"></section>
 
     <section class="panel">
-      <div class="panel-head"><h3>Próximas faturas</h3><span class="panel-sub">Já comprometido com parcelas e gastos lançados</span></div>
+      <div class="panel-head"><h3>Próximas faturas</h3><span class="panel-sub">Toque num mês para ver o que compõe a fatura</span></div>
       <div class="report-table-wrap so-largo"><table class="report-table tabela-proximas" id="tabelaProximas"></table></div>
       <ul class="lista-proximas so-estreito" id="listaProximas"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Compras parceladas</h3><span class="panel-sub" id="parceladasSub"></span></div>
+      <div id="parceladas"></div>
     </section>
 
     <section class="panel">
@@ -54,6 +59,6 @@
     </section>
   </main>
 </div>
-<script src="js/cartoes.js?v=8"></script>
+<script src="js/cartoes.js?v=9"></script>
 </body>
 </html>

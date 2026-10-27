@@ -67,21 +67,65 @@
     tabela.innerHTML = `<thead><tr><th>Cartão</th>${meses.map(mes => `<th class="num">${STORE.nomeMes(mes)}</th>`).join('')}</tr></thead>
       <tbody>${linhas.map(l => `<tr><td class="col-nome">💳 ${UI.esc(l.c.nome)}</td>${l.valores.map((v, i) => {
         const np = parcelas(l.c.id, meses[i]);
-        return `<td class="num${v ? ' tem-valor' : ''}">${v ? UI.brl(v) : '—'}${np ? `<small class="sub-parcelas">${np} parcela${np > 1 ? 's' : ''}</small>` : ''}</td>`;
+        return `<td class="num${v ? ' tem-valor' : ''}"${v ? ` data-detalhe="${l.c.id}|${meses[i]}"` : ''}>${v ? UI.brl(v) : '—'}${np ? `<small class="sub-parcelas">${np} parcela${np > 1 ? 's' : ''}</small>` : ''}</td>`;
       }).join('')}</tr>`).join('')}</tbody>
       <tfoot><tr><td class="col-nome">Total</td>${total.map(v => `<td class="num">${UI.brl(v)}</td>`).join('')}</tr></tfoot>`;
     /* Celular: um item por mês, com o total e quanto vai em cada cartão. */
     lista.innerHTML = meses.map((mes, i) => {
       const np = STORE.dados.cartoes.reduce((s, c) => s + parcelas(c.id, mes), 0);
       const det = linhas.filter(l => l.valores[i]).map(l => `${UI.esc(l.c.nome)} ${UI.brl(l.valores[i])}`).join(' · ');
-      return `<li><div><strong>${STORE.nomeMes(mes, true)}</strong><span>${det || 'nada lançado'}${np ? ` · ${np} parcela${np > 1 ? 's' : ''}` : ''}</span></div><strong>${UI.brl(total[i])}</strong></li>`;
+      return `<li data-detalhe="*|${mes}" role="button" tabindex="0"><div><strong>${STORE.nomeMes(mes, true)}</strong><span>${det || 'nada lançado'}${np ? ` · ${np} parcela${np > 1 ? 's' : ''}` : ''}</span></div><strong>${UI.brl(total[i])}</strong></li>`;
     }).join('');
+    document.querySelectorAll('[data-detalhe]').forEach(el => el.addEventListener('click', () => {
+      const [cId, mes] = el.dataset.detalhe.split('|');
+      detalheFatura(cId === '*' ? null : STORE.cartao(cId), mes);
+    }));
+  }
+
+  /* O que compõe a fatura de um mês: parcelas (com n/de) e gastos à vista, por cartão. */
+  function detalheFatura(cartao, mes) {
+    const cartoes = cartao ? [cartao] : STORE.dados.cartoes;
+    const html = cartoes.map((c) => {
+      const itens = STORE.doMes(mes).filter(l => STORE.ehDespesa(l) && l.forma === c.id).sort((a, b) => (b.parcela ? 1 : 0) - (a.parcela ? 1 : 0) || b.valor - a.valor);
+      const aj = STORE.ajusteFatura(c.id, mes);
+      if (!itens.length && !aj) return '';
+      return `<div class="modal-group"><div class="modal-group-title">💳 ${UI.esc(c.nome)}</div>${itens.map(l => `<div class="modal-row"><div class="modal-row-info"><strong>${UI.esc(l.descricao || '(sem descrição)')}</strong><span>${l.parcela ? `parcela ${l.parcela.n}/${l.parcela.de} · compra de ${UI.brl(l.parcela.total)}` : 'à vista'}${l.tipo === 'fixo' ? ' · fixo' : ''}</span></div><span class="modal-row-value">${UI.brl(l.valor)}</span></div>`).join('')}
+        ${aj ? `<div class="modal-row"><div class="modal-row-info"><strong>Ajuste manual</strong></div><span class="modal-row-value">${UI.brl(aj)}</span></div>` : ''}
+        <div class="modal-total-row"><span>Fatura</span><span>${UI.brl(STORE.fatura(c.id, mes))}</span></div></div>`;
+    }).join('');
+    UI.modal({ titulo: `Fatura de ${STORE.nomeMes(mes, true)}`, html: html || '<p class="nota">Nada lançado nesta fatura.</p>' });
+  }
+
+  /* Cada compra parcelada uma vez só, com parcela atual, o que falta e aviso de duplicada. */
+  function renderParceladas(m) {
+    const lista = STORE.comprasParceladas(m).filter(c => c.fim >= m);
+    const dup = lista.filter(c => c.duplicadaDe).length;
+    document.getElementById('parceladasSub').textContent = lista.length ? `${lista.length} em andamento${dup ? ` · ${dup} possivelmente duplicada${dup > 1 ? 's' : ''}` : ''}` : '';
+    const el = document.getElementById('parceladas');
+    if (!lista.length) { el.innerHTML = '<p class="vazio-curto">Nenhuma compra parcelada em andamento a partir deste mês.</p>'; return; }
+    el.innerHTML = (dup ? '<p class="aviso-inline">⚠️ Há compras que parecem ter sido lançadas <strong>mais de uma vez</strong> (mesma descrição, cartão, valor e meses). Confira e exclua as repetidas.</p>' : '') +
+      `<ul class="parceladas">${lista.map(c => `<li class="${c.duplicadaDe ? 'is-duplicada' : ''}">
+        <div class="parc-info">
+          <strong>${UI.esc(c.descricao || '(sem descrição)')}${c.duplicadaDe ? ' <span class="tag tag-alerta">duplicada?</span>' : ''}</strong>
+          <span>${UI.esc(STORE.nomeForma(c.forma))} · ${c.de}x de ${UI.brl(c.valorParcela)} (total ${UI.brl(c.total)})</span>
+          <span>${c.atual ? `Neste mês: parcela ${c.atual.parcela.n}/${c.de}` : `Começa em ${STORE.nomeMes(c.inicio)}`} · termina em ${STORE.nomeMes(c.fim)} · falta ${UI.brl(c.restante)} (${c.qtdRestante}x)</span>
+        </div>
+        <button type="button" class="icon-remove" data-compra="${c.grupo}" aria-label="Excluir compra ${UI.esc(c.descricao || '')}">${UI.ico('lixo', 'icon-sm')}</button>
+      </li>`).join('')}</ul>`;
+    el.querySelectorAll('[data-compra]').forEach(b => b.addEventListener('click', () => {
+      const c = lista.find(x => x.grupo === b.dataset.compra);
+      if (!UI.confirmar(`Excluir a compra “${c.descricao || 'sem descrição'}” inteira (${c.lancadas} parcela${c.lancadas > 1 ? 's' : ''} lançada${c.lancadas > 1 ? 's' : ''}, de ${STORE.nomeMes(c.inicio)} a ${STORE.nomeMes(c.fim)})?`)) return;
+      const n = STORE.removerCompra(c.grupo);
+      render();
+      UI.toast(`Compra excluída (${n} parcela${n > 1 ? 's' : ''}).`);
+    }));
   }
 
   function render() {
     const m = STORE.mesRef();
     renderCartoes(m);
     renderProximas(m);
+    renderParceladas(m);
     renderAno(m);
   }
 

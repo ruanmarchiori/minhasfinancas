@@ -308,6 +308,52 @@ const STORE = (function () {
     salvar();
     return criados;
   }
+  /* Compras parceladas (um item por compra), com a situação no mês "ref". */
+  const chaveCompra = (l) => [l.tipo, (l.descricao || '').trim().toLowerCase(), l.forma || '', l.parcela.de, Math.round(l.parcela.total * 100)].join('|');
+  function comprasParceladas(ref) {
+    const grupos = new Map();
+    dados.lancamentos.filter(l => l.parcela).forEach((l) => {
+      if (!grupos.has(l.parcela.grupo)) grupos.set(l.parcela.grupo, []);
+      grupos.get(l.parcela.grupo).push(l);
+    });
+    const lista = [...grupos.values()].map((ps) => {
+      ps.sort((a, b) => a.parcela.n - b.parcela.n);
+      const p0 = ps[0], ult = ps[ps.length - 1];
+      /* mês em que cai a parcela 1 (mesmo que ela não tenha sido lançada) */
+      const mes1 = somarMes(p0.mes, 1 - p0.parcela.n);
+      const futuras = ps.filter(x => x.mes >= ref);
+      return {
+        grupo: p0.parcela.grupo, descricao: p0.descricao, forma: p0.forma, tipo: p0.tipo, categoria: p0.categoria,
+        de: p0.parcela.de, total: p0.parcela.total, valorParcela: p0.valor, lancadas: ps.length,
+        inicio: p0.mes, fim: ult.mes, mes1,
+        atual: ps.find(x => x.mes === ref) || null,
+        restante: futuras.reduce((s, x) => s + (Number(x.valor) || 0), 0), qtdRestante: futuras.length,
+        chave: chaveCompra(p0), mesesSobrepostos: ps.map(x => x.mes)
+      };
+    });
+    /* Duplicada provável: outra compra com mesma descrição, cartão, nº de parcelas e total,
+       cobrindo os mesmos meses. */
+    lista.forEach((c) => {
+      c.duplicadaDe = lista.filter(o => o !== c && o.chave === c.chave && o.mes1 === c.mes1).length;
+    });
+    return lista.sort((a, b) => (a.forma || '').localeCompare(b.forma || '') || a.inicio.localeCompare(b.inicio) || (a.descricao || '').localeCompare(b.descricao || ''));
+  }
+  /* Antes de lançar: já existe a mesma compra? */
+  function compraParecida(base, de, valorTotal, mesParcela1) {
+    return comprasParceladas('0000-00').find(c => c.chave === chaveCompra({ ...base, parcela: { de, total: valorTotal } }) && c.mes1 === mesParcela1) || null;
+  }
+  function removerCompra(grupo) {
+    const antes = dados.lancamentos.length;
+    dados.lancamentos = dados.lancamentos.filter(l => !(l.parcela && l.parcela.grupo === grupo));
+    salvar();
+    return antes - dados.lancamentos.length;
+  }
+  /* Lançamento simples igual já existente (mesmo mês, valor, descrição, forma). */
+  function lancamentoParecido(l) {
+    return dados.lancamentos.find(x => x.id !== l.id && !x.parcela && x.tipo === l.tipo && x.mes === l.mes && Math.round(x.valor * 100) === Math.round(l.valor * 100)
+      && (x.descricao || '').trim().toLowerCase() === (l.descricao || '').trim().toLowerCase() && (x.forma || '') === (l.forma || '') && (x.pessoa || '') === (l.pessoa || '')) || null;
+  }
+
   function parcelasDoGrupo(grupo) {
     return dados.lancamentos.filter(l => l.parcela && l.parcela.grupo === grupo).sort((a, b) => a.parcela.n - b.parcela.n);
   }
@@ -378,6 +424,6 @@ const STORE = (function () {
     totais, porCategoria, porPessoa, fatura, ajusteFatura, setAjusteFatura, gastosNaForma,
     serieAno, resumoAno, tabelaReserva, saldoReservaAte, calcMeta, totaisMetas,
     salvarLancamento, removerLancamento, repetirDoMes, remover, emUso,
-    lancarParcelado, parcelasDoGrupo, removerParcelasDesde
+    lancarParcelado, parcelasDoGrupo, removerParcelasDesde, comprasParceladas, compraParecida, removerCompra, lancamentoParecido
   };
 })();

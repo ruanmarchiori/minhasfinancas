@@ -12,14 +12,14 @@
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Lançamentos | Finanças</title>
-<script src="js/config.js?v=8"></script>
-<script src="js/auth.js?v=8"></script>
+<script src="js/config.js?v=9"></script>
+<script src="js/auth.js?v=9"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=8"></script>
-<script src="js/pwa.js?v=8"></script>
-<link rel="stylesheet" href="css/app.css?v=8">
-<script src="js/store.js?v=8"></script>
-<script src="js/layout.js?v=8"></script>
+<script src="js/theme.js?v=9"></script>
+<script src="js/pwa.js?v=9"></script>
+<link rel="stylesheet" href="css/app.css?v=9">
+<script src="js/store.js?v=9"></script>
+<script src="js/layout.js?v=9"></script>
 <script>
   /* Uma tela para os três tipos (as três abas de lançamento da planilha). */
   window.TIPO = ({ receita: 'receita', fixo: 'fixo', variavel: 'variavel' })[new URLSearchParams(location.search).get('tipo')] || 'variavel';
@@ -61,6 +61,6 @@
   </main>
 </div>
 <button type="button" class="fab" id="fabNovo" aria-label="Novo lançamento"><svg class="icon"><use href="#i-mais"/></svg></button>
-<script src="js/lancamentos.js?v=8"></script>
+<script src="js/lancamentos.js?v=9"></script>
 </body>
 </html>
