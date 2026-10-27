@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16472e">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Configurações | Finanças</title>
+<script src="js/config.js?v=11"></script>
+<script src="js/auth.js?v=11"></script>
+<script>AUTH.requireAuth();</script>
+<script src="js/theme.js?v=11"></script>
+<script src="js/pwa.js?v=11"></script>
+<link rel="stylesheet" href="css/app.css?v=11">
+<script src="js/store.js?v=11"></script>
+<script src="js/layout.js?v=11"></script>
+<script src="js/planilha.js?v=11"></script>
+</head>
+<body>
+<div class="app">
+  <script>UI.sidebar('configuracoes');</script>
+  <main class="main">
+    <script>UI.topbar('Configurações');</script>
+
+    <section class="panel" id="importar">
+      <div class="panel-head"><h3>Importar a planilha (.xlsx)</h3></div>
+      <p class="nota">Traz receitas, gastos fixos e variáveis, cartões, reserva e metas da sua <strong>PLANILHA.xlsx</strong>. O arquivo é lido aqui mesmo no navegador — não é enviado para nenhum lugar.</p>
+      <label class="btn btn-outline arquivo-btn"><svg class="icon-sm"><use href="#i-planilha"/></svg><span>Escolher planilha…</span><input type="file" id="arquivoPlanilha" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label>
+      <div id="previaPlanilha"></div>
+    </section>
+
+    <section class="grid-2 grid-2-igual">
+      <div class="panel">
+        <div class="panel-head"><h3>Pessoas da casa</h3></div>
+        <p class="nota">Quem tem renda — aparece em Receitas e no Painel.</p>
+        <ul class="lista-edit" id="listaPessoas"></ul>
+        <form class="linha-add" id="formPessoa" novalidate><input name="nome" maxlength="30" placeholder="Nome da pessoa" aria-label="Nome da nova pessoa"><button class="btn btn-primary btn-sm" type="submit">Adicionar</button></form>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Preferências</h3></div>
+        <label class="field"><span>Meta de poupança mensal (%)</span><input id="metaPoupanca" inputmode="decimal"><span class="field-hint">Usada no card “% poupado” do Painel. A planilha recomendava 20%.</span></label>
+        <label class="checkbox-field linha-tema"><input type="checkbox" id="temaEscuro"> Modo escuro</label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Categorias de gastos</h3></div>
+      <p class="nota">Toque no ícone para trocar o emoji. Renomear aqui muda o nome em todos os lançamentos.</p>
+      <div class="grid-2 grid-2-igual">
+        <div><h4 class="sub-titulo">Gastos fixos</h4><ul class="lista-edit" id="catFixo"></ul></div>
+        <div><h4 class="sub-titulo">Gastos variáveis</h4><ul class="lista-edit" id="catVariavel"></ul></div>
+      </div>
+      <form class="linha-add" id="formCategoria" novalidate>
+        <input name="icone" maxlength="4" placeholder="🏷️" aria-label="Emoji" class="input-emoji">
+        <input name="nome" maxlength="30" placeholder="Nova categoria" aria-label="Nome da categoria">
+        <select name="tipo" aria-label="Tipo"><option value="variavel">Variável</option><option value="fixo">Fixo</option></select>
+        <button class="btn btn-primary btn-sm" type="submit">Adicionar</button>
+      </form>
+    </section>
+
+    <section class="panel" id="ciclo">
+      <div class="panel-head"><h3>Cartões: fechamento e vencimento</h3><a class="plain-link" href="cartoes.html">Ver cartões</a></div>
+      <p class="nota">O dia de <strong>fechamento</strong> define em qual fatura cada compra entra; o de <strong>vencimento</strong>, quando a fatura deve ser paga. Se o banco mudar a data de <strong>uma fatura específica</strong> (feriado, fim de semana), ajuste só ela em “Exceções”.</p>
+      <div id="ciclos"></div>
+    </section>
+
+    <section class="panel" id="fechar">
+      <div class="panel-head"><h3>Fechar o ano</h3></div>
+      <p class="nota">Salva um arquivo com o ano inteiro e apaga <strong>só os dados mensais</strong> desse ano (receitas, gastos fixos e variáveis, ajustes de fatura). Continuam: <strong>cartões, metas, reserva</strong>, pessoas e categorias. Para rever o ano depois, importe o arquivo em Backup.</p>
+      <div id="fecharAno"></div>
+    </section>
+
+    <section class="grid-2 grid-2-igual">
+      <div class="panel">
+        <div class="panel-head"><h3>Backup</h3></div>
+        <p class="nota">Os dados ficam <strong>só neste aparelho</strong>. Se o app for apagado, eles vão junto — salve um backup de vez em quando (no iPhone: “Salvar em Arquivos” ou envie para você mesmo).</p>
+        <div class="botoes-linha">
+          <button type="button" class="btn btn-primary btn-sm" id="baixarBackup"><svg class="icon-sm"><use href="#i-baixar"/></svg>Salvar backup</button>
+          <label class="btn btn-outline btn-sm arquivo-btn"><svg class="icon-sm"><use href="#i-subir"/></svg><span>Importar backup</span><input type="file" id="arquivoBackup" accept=".json,application/json" hidden></label>
+        </div>
+        <p class="field-hint" id="infoDados"></p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Trocar senha</h3></div>
+        <form class="auth-form" id="formSenha" novalidate>
+          <label class="field"><span>Senha atual</span><input type="password" name="atual" autocomplete="current-password"></label>
+          <label class="field"><span>Nova senha</span><input type="password" name="nova" autocomplete="new-password" minlength="6"></label>
+          <p class="auth-msg" id="senhaMsg"></p>
+          <button type="submit" class="btn btn-primary btn-sm">Salvar nova senha</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel zona-perigo">
+      <div class="panel-head"><h3>Apagar todos os dados</h3></div>
+      <p class="nota">Remove lançamentos, cartões, reserva e metas deste navegador. Baixe um backup antes.</p>
+      <button type="button" class="btn btn-danger btn-sm" id="apagarTudo"><svg class="icon-sm"><use href="#i-lixo"/></svg>Apagar tudo</button>
+    </section>
+  </main>
+  </div>
+</div>
+<script src="js/configuracoes.js?v=11"></script>
+</body>
+</html>

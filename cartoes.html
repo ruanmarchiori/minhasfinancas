@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16472e">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Cartões | Finanças</title>
+<script src="js/config.js?v=11"></script>
+<script src="js/auth.js?v=11"></script>
+<script>AUTH.requireAuth();</script>
+<script src="js/theme.js?v=11"></script>
+<script src="js/pwa.js?v=11"></script>
+<link rel="stylesheet" href="css/app.css?v=11">
+<script src="js/store.js?v=11"></script>
+<script src="js/layout.js?v=11"></script>
+</head>
+<body>
+<div class="app">
+  <script>UI.sidebar('cartoes');</script>
+  <main class="main">
+    <script>UI.topbar('Cartões', { mes: true });</script>
+
+    <section class="lanc-topo">
+      <div class="lanc-total">
+        <span class="lanc-total-rotulo" id="totalRotulo">Total em faturas</span>
+        <strong id="totalValor">—</strong>
+        <span class="lanc-total-sub" id="totalSub"></span>
+      </div>
+      <div class="lanc-acoes">
+        <button type="button" class="btn btn-lime" id="btnNovo"><svg class="icon-sm"><use href="#i-mais"/></svg>Novo cartão</button>
+      </div>
+    </section>
+
+    <p class="nota">Como no banco: a compra parcelada ocupa o limite pelo <strong>valor total</strong>, e cada fatura paga devolve o valor ao limite. A data da compra e o dia de fechamento definem em qual fatura ela entra. Use o <strong>ajuste</strong> para o que não foi lançado (juros, anuidade…).</p>
+
+    <section class="cartoes-grid" id="cartoes"></section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Próximas faturas</h3><span class="panel-sub">Toque num mês para ver o que compõe a fatura</span></div>
+      <div class="report-table-wrap so-largo"><table class="report-table tabela-proximas" id="tabelaProximas"></table></div>
+      <ul class="lista-proximas so-estreito" id="listaProximas"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3>Compras parceladas</h3><span class="panel-sub" id="parceladasSub"></span></div>
+      <div id="parceladas"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h3 id="anoTitulo">Faturas do ano</h3><span class="panel-sub">Cartões + Pix, Dinheiro e Débito</span></div>
+      <div class="report-table-wrap"><table class="report-table tabela-ano" id="tabelaAno"></table></div>
+    </section>
+  </main>
+  </div>
+</div>
+<script src="js/cartoes.js?v=11"></script>
+</body>
+</html>

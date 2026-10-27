@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16472e">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Entrar | Finanças</title>
+<script src="js/theme.js?v=11"></script>
+<script src="js/pwa.js?v=11"></script>
+<link rel="stylesheet" href="css/app.css?v=11">
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a15.7 15.7 0 0 1-3.2 4.1M6.2 6.8C3.7 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 3.4-.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 9.8a3 3 0 0 0 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">R$</div>
+      <span class="brand-name">Finanças</span>
+    </div>
+    <h1>Entrar</h1>
+    <p class="auth-sub">Controle financeiro da casa.</p>
+
+    <form class="auth-form" id="loginForm">
+      <label class="field">
+        <span>E-mail</span>
+        <input type="email" name="email" required autocomplete="username" placeholder="seu@email.com">
+      </label>
+      <label class="field">
+        <span>Senha</span>
+        <div class="password-field">
+          <input type="password" name="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="password-toggle" id="loginPasswordToggle" aria-label="Mostrar senha">
+            <svg class="icon-sm"><use href="#i-eye"/></svg>
+          </button>
+        </div>
+      </label>
+      <p class="auth-msg" id="authMsg"></p>
+      <button type="submit" class="btn btn-lime auth-submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/config.js?v=11"></script>
+<script src="js/auth.js?v=11"></script>
+<script>
+  /* Se já tem sessão válida no servidor, nem mostra o formulário. */
+  if (AUTH.isLoggedIn()) {
+    AUTH.check().then((ok) => { if (ok) window.location.href = 'index.html'; });
+  }
+
+  const form = document.getElementById('loginForm');
+  const msgEl = document.getElementById('authMsg');
+  const submitBtn = form.querySelector('.auth-submit');
+
+  /* Olhinho: mostra/oculta a senha digitada (mesmo padrão da tela de Configurações). */
+  const pwdInput = document.getElementById('loginPassword');
+  const pwdToggle = document.getElementById('loginPasswordToggle');
+  pwdToggle.addEventListener('click', () => {
+    const showing = pwdInput.type === 'text';
+    pwdInput.type = showing ? 'password' : 'text';
+    pwdToggle.querySelector('use').setAttribute('href', showing ? '#i-eye' : '#i-eye-off');
+    pwdToggle.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msgEl.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Entrando...';
+    const result = await AUTH.login(form.email.value, form.password.value);
+    if (!result.ok) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Entrar';
+      msgEl.textContent = result.error;
+      return;
+    }
+    window.location.href = 'index.html';
+  });
+</script>
+</body>
+</html>
