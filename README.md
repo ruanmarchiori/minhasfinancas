@@ -109,7 +109,7 @@ pagamentos), reserva (aportes e saldo), pessoas e categorias. Importar esse arqu
 
 ## Publicar (GitHub Pages)
 
-App no ar: **https://ruanmarchiori.github.io/finan-as/** (repositório `ruanmarchiori/finan-as`).
+App no ar: **https://ruanmarchiori.github.io/minhasfinancas/** (repositório `ruanmarchiori/minhasfinancas`).
 
 - `main`: código-fonte (este repositório).
 - `gh-pages`: só os arquivos do app, gerados por `node ferramentas/preparar-publicacao.js`
