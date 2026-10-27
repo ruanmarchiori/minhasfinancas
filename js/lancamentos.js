@@ -26,6 +26,7 @@
 
   function linhaInfo(l) {
     const partes = [];
+    if (l.parcela) partes.push(`parcela ${l.parcela.n}/${l.parcela.de}`);
     if (l.dia) partes.push(`dia ${l.dia}`);
     if (RECEITA) partes.push(l.tipoReceita || 'Receita');
     else partes.push(STORE.nomeForma(l.forma));
@@ -177,13 +178,29 @@
           <label class="field"><span>Categoria</span><select name="categoria">${opcoesCategoria(l.categoria)}</select></label>
           <label class="field"><span>Forma de pagamento</span><select name="forma">${opcoesForma(l.forma)}</select></label>
         </div>`}
+      ${!RECEITA && novo ? `
+      <div class="parcelado">
+        <label class="checkbox-field"><input type="checkbox" name="parcelado"> Compra parcelada</label>
+        <div class="parcelado-campos" hidden>
+          <div class="form-grid">
+            <label class="field"><span>Número de parcelas</span><input name="parcelas" inputmode="numeric" maxlength="2" placeholder="Ex.: 10" value="2"></label>
+            <label class="field"><span>Estou na parcela</span><input name="inicio" inputmode="numeric" maxlength="2" value="1"><span class="field-hint">Para compra que já está rodando (ex.: 4 se já pagou 3).</span></label>
+          </div>
+          <div class="seletor-valor" role="radiogroup" aria-label="O valor digitado é">
+            <label><input type="radio" name="modoValor" value="parcela" checked> Valor de cada parcela</label>
+            <label><input type="radio" name="modoValor" value="total"> Valor total da compra</label>
+          </div>
+          <p class="parcelado-resumo" data-resumo></p>
+        </div>
+      </div>` : ''}
+      ${l.parcela ? `<p class="aviso-inline">Parcela <strong>${l.parcela.n} de ${l.parcela.de}</strong> de uma compra de ${UI.brl(l.parcela.total)}. Alterações valem só para esta parcela.</p>` : ''}
       <div class="form-grid">
-        <label class="field"><span>Mês</span><input type="month" name="mes" value="${l.mes}" required></label>
+        <label class="field"><span>${!RECEITA && novo ? 'Mês (da 1ª parcela, se parcelado)' : 'Mês'}</span><input type="month" name="mes" value="${l.mes}" required></label>
         <label class="field"><span>Dia (opcional)</span><input name="dia" inputmode="numeric" maxlength="2" placeholder="—" value="${l.dia || ''}"></label>
       </div>
       <p class="auth-msg" data-erro></p>
       <div class="form-actions">
-        ${novo ? '' : `<button type="button" class="btn btn-danger" data-excluir>${UI.ico('lixo', 'icon-sm')} Excluir</button>`}
+        ${novo ? '' : `<div class="botoes-excluir"><button type="button" class="btn btn-danger" data-excluir>${UI.ico('lixo', 'icon-sm')} Excluir${l.parcela ? ' esta' : ''}</button>${l.parcela && l.parcela.n < l.parcela.de ? '<button type="button" class="btn btn-danger" data-excluir-proximas>Excluir esta e as próximas</button>' : ''}</div>`}
         <div class="form-actions-right">
           ${novo ? '<button type="submit" class="btn btn-outline" data-outro>Salvar e lançar outro</button>' : ''}
           <button type="submit" class="btn btn-lime">${novo ? 'Salvar' : 'Salvar alterações'}</button>
@@ -207,6 +224,28 @@
       });
     }
 
+    /* Parcelado: mostra/oculta os campos e o resumo "10x de R$ 150,00 — de Jul/2026 a Abr/2027". */
+    const cx = form.parcelado;
+    function parcelamento() {
+      const de = parseInt(form.parcelas.value, 10);
+      const ini = parseInt(form.inicio.value, 10) || 1;
+      const v = UI.lerValor(form.valor.value);
+      const modo = (form.querySelector('[name=modoValor]:checked') || {}).value;
+      const total = modo === 'total' ? v : v * (de || 0);
+      return { de, ini, v, total, porParcela: de ? total / de : 0, qtd: de - ini + 1 };
+    }
+    function resumoParcelas() {
+      if (!cx) return;
+      form.querySelector('.parcelado-campos').hidden = !cx.checked;
+      const p = parcelamento();
+      const r = form.querySelector('[data-resumo]');
+      if (!(p.de >= 2) || !(p.ini >= 1 && p.ini <= p.de) || !(p.v > 0) || !/^\d{4}-\d{2}$/.test(form.mes.value)) { r.textContent = ''; return; }
+      const fim = STORE.somarMes(form.mes.value, p.qtd - 1);
+      r.textContent = `${p.de}x de ${UI.brl(p.porParcela)} (total ${UI.brl(p.total)}) · serão lançadas ${p.qtd} parcela${p.qtd > 1 ? 's' : ''} (${p.ini}/${p.de} a ${p.de}/${p.de}), de ${STORE.nomeMes(form.mes.value)} a ${STORE.nomeMes(fim)}.`;
+    }
+    if (cx) form.addEventListener('input', resumoParcelas);
+    if (cx) form.addEventListener('change', resumoParcelas);
+
     let lancarOutro = false;
     form.querySelectorAll('button[type=submit]').forEach(b => b.addEventListener('click', () => { lancarOutro = b.hasAttribute('data-outro'); }));
     form.addEventListener('submit', (e) => {
@@ -223,11 +262,31 @@
       };
       if (RECEITA) { salvo.pessoa = form.pessoa.value; salvo.tipoReceita = form.tipoReceita.value; }
       else { salvo.categoria = form.categoria.value; salvo.forma = form.forma.value; }
+      if (cx && cx.checked) {
+        const p = parcelamento();
+        if (!(p.de >= 2 && p.de <= 99)) { erro.textContent = 'Número de parcelas: de 2 a 99.'; return; }
+        if (!(p.ini >= 1 && p.ini <= p.de)) { erro.textContent = `“Estou na parcela” vai de 1 a ${p.de}.`; return; }
+        const criados = STORE.lancarParcelado(salvo, p.de, p.ini, Math.round(p.total * 100) / 100);
+        janela.fechar();
+        render();
+        UI.toast(`${criados.length} parcela${criados.length > 1 ? 's' : ''} de ${UI.brl(p.porParcela)} lançada${criados.length > 1 ? 's' : ''} até ${STORE.nomeMes(criados[criados.length - 1].mes)}.`);
+        if (lancarOutro) abrirForm(null);
+        return;
+      }
       STORE.salvarLancamento(salvo);
       janela.fechar();
       render();
       UI.toast(novo ? `Lançado: ${UI.brl(valor)}${salvo.mes !== STORE.mesRef() ? ' em ' + STORE.nomeMes(salvo.mes) : ''}` : 'Alterações salvas.');
       if (lancarOutro) abrirForm(null);
+    });
+    const excProx = form.querySelector('[data-excluir-proximas]');
+    if (excProx) excProx.addEventListener('click', () => {
+      const restantes = l.parcela.de - l.parcela.n + 1;
+      if (!UI.confirmar(`Excluir a parcela ${l.parcela.n}/${l.parcela.de} e as ${restantes - 1} seguintes (${restantes} no total)?`)) return;
+      const n = STORE.removerParcelasDesde(l);
+      janela.fechar();
+      render();
+      UI.toast(`${n} parcela${n > 1 ? 's' : ''} excluída${n > 1 ? 's' : ''}.`);
     });
     const exc = form.querySelector('[data-excluir]');
     if (exc) exc.addEventListener('click', () => {

@@ -54,9 +54,34 @@
       <tbody>${linhas.map(l => `<tr><td class="col-nome">${UI.esc(l.nome)}</td>${l.valores.map(cel).join('')}<td class="num forte">${UI.brl(l.valores.reduce((a, b) => a + b, 0))}</td></tr>`).join('')}</tbody>`;
   }
 
+  /* Próximos 6 meses a partir do mês de referência — mostra o peso das compras parceladas. */
+  function renderProximas(m) {
+    const meses = [];
+    for (let i = 0; i < 6; i++) meses.push(STORE.somarMes(m, i));
+    const tabela = document.getElementById('tabelaProximas');
+    const lista = document.getElementById('listaProximas');
+    if (!STORE.dados.cartoes.length) { tabela.innerHTML = '<tr><td class="report-empty">Cadastre um cartão para ver as próximas faturas.</td></tr>'; lista.innerHTML = '<li class="vazio-curto">Cadastre um cartão para ver as próximas faturas.</li>'; return; }
+    const parcelas = (cId, mes) => STORE.doMes(mes).filter(l => l.forma === cId && l.parcela).length;
+    const linhas = STORE.dados.cartoes.map(c => ({ c, valores: meses.map(mes => STORE.fatura(c.id, mes)) }));
+    const total = meses.map((_, i) => linhas.reduce((s, l) => s + l.valores[i], 0));
+    tabela.innerHTML = `<thead><tr><th>Cartão</th>${meses.map(mes => `<th class="num">${STORE.nomeMes(mes)}</th>`).join('')}</tr></thead>
+      <tbody>${linhas.map(l => `<tr><td class="col-nome">💳 ${UI.esc(l.c.nome)}</td>${l.valores.map((v, i) => {
+        const np = parcelas(l.c.id, meses[i]);
+        return `<td class="num${v ? ' tem-valor' : ''}">${v ? UI.brl(v) : '—'}${np ? `<small class="sub-parcelas">${np} parcela${np > 1 ? 's' : ''}</small>` : ''}</td>`;
+      }).join('')}</tr>`).join('')}</tbody>
+      <tfoot><tr><td class="col-nome">Total</td>${total.map(v => `<td class="num">${UI.brl(v)}</td>`).join('')}</tr></tfoot>`;
+    /* Celular: um item por mês, com o total e quanto vai em cada cartão. */
+    lista.innerHTML = meses.map((mes, i) => {
+      const np = STORE.dados.cartoes.reduce((s, c) => s + parcelas(c.id, mes), 0);
+      const det = linhas.filter(l => l.valores[i]).map(l => `${UI.esc(l.c.nome)} ${UI.brl(l.valores[i])}`).join(' · ');
+      return `<li><div><strong>${STORE.nomeMes(mes, true)}</strong><span>${det || 'nada lançado'}${np ? ` · ${np} parcela${np > 1 ? 's' : ''}` : ''}</span></div><strong>${UI.brl(total[i])}</strong></li>`;
+    }).join('');
+  }
+
   function render() {
     const m = STORE.mesRef();
     renderCartoes(m);
+    renderProximas(m);
     renderAno(m);
   }
 

@@ -45,6 +45,15 @@ O **mês de referência** (o seletor no topo, equivalente à célula K1 do Dashb
 todas as telas. Nas telas de lançamento, a visão **Ano** mostra a grade da planilha
 (categoria × Jan…Dez, Total e Média).
 
+## Compras parceladas
+
+No formulário de gasto, **Compra parcelada**: número de parcelas, "estou na parcela" (para
+compras que já estavam rodando — cria só as que faltam) e se o valor digitado é o de cada
+parcela ou o total (centavos da divisão vão na última). Cada parcela é um lançamento no seu
+mês (`parcela: { grupo, n, de, total }`), então as faturas futuras dos cartões já aparecem —
+Cartões → **Próximas faturas** mostra os próximos 6 meses. Ao editar uma parcela, dá para excluir
+só ela ou **ela e as próximas** (compra quitada/cancelada). "Repetir do mês anterior" ignora parcelas.
+
 ## Diferenças em relação à planilha
 
 - Cada receita/gasto é **um lançamento** (mês, dia opcional, descrição, valor, categoria,

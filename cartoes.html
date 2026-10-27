@@ -12,14 +12,14 @@
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Cartões | Finanças</title>
-<script src="js/config.js?v=5"></script>
-<script src="js/auth.js?v=5"></script>
+<script src="js/config.js?v=7"></script>
+<script src="js/auth.js?v=7"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=5"></script>
-<script src="js/pwa.js?v=5"></script>
-<link rel="stylesheet" href="css/app.css?v=5">
-<script src="js/store.js?v=5"></script>
-<script src="js/layout.js?v=5"></script>
+<script src="js/theme.js?v=7"></script>
+<script src="js/pwa.js?v=7"></script>
+<link rel="stylesheet" href="css/app.css?v=7">
+<script src="js/store.js?v=7"></script>
+<script src="js/layout.js?v=7"></script>
 </head>
 <body>
 <div class="app">
@@ -43,11 +43,17 @@
     <section class="cartoes-grid" id="cartoes"></section>
 
     <section class="panel">
+      <div class="panel-head"><h3>Próximas faturas</h3><span class="panel-sub">Já comprometido com parcelas e gastos lançados</span></div>
+      <div class="report-table-wrap so-largo"><table class="report-table tabela-proximas" id="tabelaProximas"></table></div>
+      <ul class="lista-proximas so-estreito" id="listaProximas"></ul>
+    </section>
+
+    <section class="panel">
       <div class="panel-head"><h3 id="anoTitulo">Faturas do ano</h3><span class="panel-sub">Cartões + Pix, Dinheiro e Débito</span></div>
       <div class="report-table-wrap"><table class="report-table tabela-ano" id="tabelaAno"></table></div>
     </section>
   </main>
 </div>
-<script src="js/cartoes.js?v=5"></script>
+<script src="js/cartoes.js?v=7"></script>
 </body>
 </html>

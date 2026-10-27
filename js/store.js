@@ -289,10 +289,41 @@ const STORE = (function () {
     dados.lancamentos = dados.lancamentos.filter(l => l.id !== id);
     salvar();
   }
+  /* ===== Compras parceladas =====
+     Uma compra em N vezes vira N lançamentos, um por mês, ligados pelo mesmo "grupo":
+     parcela: { grupo, n (número desta parcela), de (total de parcelas), total (valor da compra) }.
+     "inicio" > 1 serve para compras que já estavam rodando: cria só da parcela "inicio" em diante,
+     a primeira no mês escolhido. Centavos que sobram da divisão vão para a última parcela. */
+  function lancarParcelado(base, de, inicio, valorTotal) {
+    const grupo = uid('par');
+    const centavos = Math.round(valorTotal * 100);
+    const parcela = Math.floor(centavos / de);
+    const criados = [];
+    for (let n = inicio; n <= de; n++) {
+      const valor = (n === de ? centavos - parcela * (de - 1) : parcela) / 100;
+      const l = { ...base, id: uid('lan'), mes: somarMes(base.mes, n - inicio), valor, parcela: { grupo, n, de, total: valorTotal }, criadoEm: new Date().toISOString() };
+      dados.lancamentos.push(l);
+      criados.push(l);
+    }
+    salvar();
+    return criados;
+  }
+  function parcelasDoGrupo(grupo) {
+    return dados.lancamentos.filter(l => l.parcela && l.parcela.grupo === grupo).sort((a, b) => a.parcela.n - b.parcela.n);
+  }
+  /* Exclui esta parcela e as seguintes (ex.: compra quitada antes / cancelada). */
+  function removerParcelasDesde(l) {
+    const antes = dados.lancamentos.length;
+    dados.lancamentos = dados.lancamentos.filter(x => !(x.parcela && l.parcela && x.parcela.grupo === l.parcela.grupo && x.parcela.n >= l.parcela.n));
+    salvar();
+    return antes - dados.lancamentos.length;
+  }
+
   /* "Repetir do mês anterior": copia os lançamentos de um tipo para o mês atual (contas
-     fixas, salário). Não duplica o que já foi copiado antes. */
+     fixas, salário). Não duplica o que já foi copiado antes. Parcelas não são copiadas —
+     cada mês já tem a sua. */
   function repetirDoMes(tipo, de, para) {
-    const origem = doMes(de, tipo);
+    const origem = doMes(de, tipo).filter(l => !l.parcela);
     const jaTem = new Set(doMes(para, tipo).map(l => l.origem).filter(Boolean));
     let n = 0;
     origem.forEach((l) => {
@@ -346,6 +377,7 @@ const STORE = (function () {
     pessoa, categoria, cartao, formas, nomeForma, doMes, ehDespesa, soma,
     totais, porCategoria, porPessoa, fatura, ajusteFatura, setAjusteFatura, gastosNaForma,
     serieAno, resumoAno, tabelaReserva, saldoReservaAte, calcMeta, totaisMetas,
-    salvarLancamento, removerLancamento, repetirDoMes, remover, emUso
+    salvarLancamento, removerLancamento, repetirDoMes, remover, emUso,
+    lancarParcelado, parcelasDoGrupo, removerParcelasDesde
   };
 })();
