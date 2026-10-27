@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#e6e6e9">
+<meta name="theme-color" content="#16472e">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/icone-180.png">
@@ -12,15 +12,15 @@
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Configurações | Finanças</title>
-<script src="js/config.js?v=10"></script>
-<script src="js/auth.js?v=10"></script>
+<script src="js/config.js?v=11"></script>
+<script src="js/auth.js?v=11"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=10"></script>
-<script src="js/pwa.js?v=10"></script>
-<link rel="stylesheet" href="css/app.css?v=10">
-<script src="js/store.js?v=10"></script>
-<script src="js/layout.js?v=10"></script>
-<script src="js/planilha.js?v=10"></script>
+<script src="js/theme.js?v=11"></script>
+<script src="js/pwa.js?v=11"></script>
+<link rel="stylesheet" href="css/app.css?v=11">
+<script src="js/store.js?v=11"></script>
+<script src="js/layout.js?v=11"></script>
+<script src="js/planilha.js?v=11"></script>
 </head>
 <body>
 <div class="app">
@@ -64,6 +64,12 @@
       </form>
     </section>
 
+    <section class="panel" id="ciclo">
+      <div class="panel-head"><h3>Cartões: fechamento e vencimento</h3><a class="plain-link" href="cartoes.html">Ver cartões</a></div>
+      <p class="nota">O dia de <strong>fechamento</strong> define em qual fatura cada compra entra; o de <strong>vencimento</strong>, quando a fatura deve ser paga. Se o banco mudar a data de <strong>uma fatura específica</strong> (feriado, fim de semana), ajuste só ela em “Exceções”.</p>
+      <div id="ciclos"></div>
+    </section>
+
     <section class="panel" id="fechar">
       <div class="panel-head"><h3>Fechar o ano</h3></div>
       <p class="nota">Salva um arquivo com o ano inteiro e apaga <strong>só os dados mensais</strong> desse ano (receitas, gastos fixos e variáveis, ajustes de fatura). Continuam: <strong>cartões, metas, reserva</strong>, pessoas e categorias. Para rever o ano depois, importe o arquivo em Backup.</p>
@@ -97,7 +103,8 @@
       <button type="button" class="btn btn-danger btn-sm" id="apagarTudo"><svg class="icon-sm"><use href="#i-lixo"/></svg>Apagar tudo</button>
     </section>
   </main>
+  </div>
 </div>
-<script src="js/configuracoes.js?v=10"></script>
+<script src="js/configuracoes.js?v=11"></script>
 </body>
 </html>

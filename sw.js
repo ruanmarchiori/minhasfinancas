@@ -5,7 +5,7 @@
    Estratégia: responde do que está guardado (abre na hora, inclusive offline) e, se houver
    internet, busca a versão nova por trás para a próxima abertura. Ao publicar mudanças, suba
    o número de VERSAO para trocar o pacote guardado. */
-const VERSAO = 'financas-v10';
+const VERSAO = 'financas-v11';
 const ARQUIVOS = [
   './', 'index.html', 'login.html', 'lancamentos.html', 'cartoes.html', 'reserva.html', 'metas.html',
   'educacao.html', 'configuracoes.html', 'manifest.webmanifest', 'favicon.svg',

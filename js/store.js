@@ -228,8 +228,21 @@ const STORE = (function () {
     return null;
   }
   function temCiclo(c) { return !!(c && c.vencimento); }
-  function vencimentoFatura(c, m) { return c.vencimento ? dataNoMes(m, Number(c.vencimento)) : null; }
+  /* Exceções: o banco às vezes muda as datas de UMA fatura (feriado, fim de semana).
+     c.excecoes = { 'AAAA-MM': { fechamento: 'AAAA-MM-DD', vencimento: 'AAAA-MM-DD' } } */
+  const excecao = (c, m) => (c.excecoes && c.excecoes[m]) || {};
+  function vencimentoFatura(c, m) {
+    if (excecao(c, m).vencimento) return excecao(c, m).vencimento;
+    return c.vencimento ? dataNoMes(m, Number(c.vencimento)) : null;
+  }
+  function setExcecaoFatura(c, m, fechamento, vencimento) {
+    c.excecoes = c.excecoes || {};
+    if (!fechamento && !vencimento) delete c.excecoes[m];
+    else c.excecoes[m] = Object.assign({}, fechamento ? { fechamento } : {}, vencimento ? { vencimento } : {});
+    salvar();
+  }
   function fechamentoFatura(c, m) {
+    if (excecao(c, m).fechamento) return excecao(c, m).fechamento;
     const f = diaFechamento(c);
     if (!f || !c.vencimento) return null;
     return dataNoMes(f < Number(c.vencimento) ? m : somarMes(m, -1), f);
@@ -238,9 +251,10 @@ const STORE = (function () {
   function faturaDaCompra(c, dataISO) {
     const m0 = dataISO.slice(0, 7);
     if (!temCiclo(c)) return m0;
-    for (let i = -1; i <= 2; i++) {
+    for (let i = -1; i <= 3; i++) {
       const m = somarMes(m0, i);
-      if (dataISO < fechamentoFatura(c, m)) return m;
+      const f = fechamentoFatura(c, m);
+      if (f && dataISO < f) return m;
     }
     return somarMes(m0, 2);
   }
@@ -521,8 +535,71 @@ const STORE = (function () {
     return antes - dados.lancamentos.length;
   }
 
+  /* ===== Nota de saúde financeira (0 a 100) =====
+     Critérios usados por apps de finanças: quanto da renda sobra, uso do limite do cartão,
+     reserva de emergência e contas em atraso. Cada item mostra quanto pesa e o que melhorar. */
+  function notaSaude(m) {
+    const t = totais(m);
+    const meta = dados.config.metaPoupanca || 0.2;
+    const itens = [];
+    /* 1) poupança do mês — 35 pts */
+    const pp = t.receitas ? Math.max(0, Math.min(1, t.poupado / meta)) : 0;
+    itens.push({ nome: 'Quanto sobra da renda', pts: 35 * pp, max: 35, dica: t.receitas ? (t.poupado >= meta ? '' : `sobrou ${(t.poupado * 100).toFixed(0)}% (meta ${(meta * 100).toFixed(0)}%)`) : 'lance as receitas do mês' });
+    /* 2) uso do limite — 25 pts (até 30% = nota cheia; 100% = zero) */
+    const cs = dados.cartoes.filter(c => Number(c.limite) > 0);
+    const lim = cs.reduce((s, c) => s + Number(c.limite), 0);
+    const usado = cs.reduce((s, c) => s + usoLimite(c).usado, 0);
+    const uso = lim ? usado / lim : 0;
+    const pl = !lim ? 1 : uso <= 0.3 ? 1 : Math.max(0, 1 - (uso - 0.3) / 0.7);
+    itens.push({ nome: 'Uso do limite dos cartões', pts: 25 * pl, max: 25, dica: lim && uso > 0.3 ? `cartões com ${(uso * 100).toFixed(0)}% do limite usado` : '' });
+    /* 3) reserva de emergência — 25 pts (6 meses de despesas = nota cheia) */
+    const meses = [];
+    for (let i = 0; i < 6; i++) meses.push(totais(somarMes(m, -i)).despesas);
+    const comGasto = meses.filter(v => v > 0);
+    const custo = comGasto.length ? comGasto.reduce((a, b) => a + b, 0) / comGasto.length : 0;
+    const cobertos = custo ? saldoReservaAte(m) / custo : 0;
+    itens.push({ nome: 'Reserva de emergência', pts: 25 * Math.min(1, cobertos / 6), max: 25, dica: cobertos < 6 ? `reserva cobre ${cobertos.toFixed(1).replace('.', ',')} de 6 meses` : '' });
+    /* 4) contas em dia — 15 pts */
+    const vencidas = dados.cartoes.reduce((s, c) => s + faturasVencidas(c).length, 0);
+    itens.push({ nome: 'Faturas em dia', pts: vencidas ? 0 : 15, max: 15, dica: vencidas ? `${vencidas} fatura${vencidas > 1 ? 's' : ''} vencida${vencidas > 1 ? 's' : ''}` : '' });
+    const nota = Math.round(itens.reduce((s, i) => s + i.pts, 0));
+    const nivel = nota >= 80 ? 'Ótima' : nota >= 60 ? 'Boa' : nota >= 40 ? 'Atenção' : 'Crítica';
+    return { nota, nivel, itens, dicas: itens.filter(i => i.dica).map(i => i.dica) };
+  }
+
+  /* ===== Busca de transações (descrição, categoria, pessoa, cartão, valor) ===== */
+  const semAcento = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function buscar(texto, limite) {
+    const q = semAcento(texto).trim();
+    if (q.length < 2) return [];
+    const num = parseFloat(q.replace(/./g, '').replace(',', '.'));
+    return dados.lancamentos.filter((l) => {
+      const c = categoria(l.categoria), p = pessoa(l.pessoa);
+      const alvo = semAcento([l.descricao, c && c.nome, p && p.nome, l.tipoReceita, nomeForma(l.forma)].join(' '));
+      return alvo.includes(q) || (Number.isFinite(num) && Math.abs(l.valor - num) < 0.005);
+    }).sort((a, b) => b.mes.localeCompare(a.mes) || (b.dia || 0) - (a.dia || 0)).slice(0, limite || 40);
+  }
+
+  /* ===== Avisos (sino): faturas a vencer em 7 dias, vencidas, ano para fechar ===== */
+  function avisos() {
+    const lista = [];
+    const hoje = hojeISO();
+    const daqui7 = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; })();
+    dados.cartoes.forEach((c) => {
+      faturasVencidas(c).forEach(m => lista.push({ tipo: 'vencida', texto: `Fatura de ${nomeMes(m)} do ${c.nome} vencida — ${saldoFatura(c.id, m).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`, href: 'cartoes.html' }));
+      mesesDoCartao(c.id).forEach((m) => {
+        const v = vencimentoFatura(c, m);
+        if (v && v >= hoje && v <= daqui7 && saldoFatura(c.id, m) > 0) lista.push({ tipo: 'vence', texto: `Fatura do ${c.nome} vence em ${v.slice(8, 10)}/${v.slice(5, 7)} — ${saldoFatura(c.id, m).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`, href: 'cartoes.html' });
+      });
+    });
+    const ano = anoParaFechar();
+    if (ano) lista.push({ tipo: 'ano', texto: `${ano} terminou — feche o ano para começar zerado`, href: 'configuracoes.html#fechar' });
+    return lista;
+  }
+
   return {
     get dados() { return dados; },
+    setExcecaoFatura, notaSaude, buscar, avisos,
     anosComLancamentos, anoParaFechar, fecharAno,
     salvar, substituirTudo, normalizar, uid,
     TIPOS_RECEITA, RENDA_FIXA, FORMAS_FIXAS, CATEGORIAS_META, MESES_CURTOS, MESES_LONGOS,

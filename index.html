@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#e6e6e9">
+<meta name="theme-color" content="#16472e">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icones/icone-180.png">
@@ -11,21 +11,21 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Painel | Finanças</title>
-<script src="js/config.js?v=10"></script>
-<script src="js/auth.js?v=10"></script>
+<title>Visão geral | Finanças</title>
+<script src="js/config.js?v=11"></script>
+<script src="js/auth.js?v=11"></script>
 <script>AUTH.requireAuth();</script>
-<script src="js/theme.js?v=10"></script>
-<script src="js/pwa.js?v=10"></script>
-<link rel="stylesheet" href="css/app.css?v=10">
-<script src="js/store.js?v=10"></script>
-<script src="js/layout.js?v=10"></script>
+<script src="js/theme.js?v=11"></script>
+<script src="js/pwa.js?v=11"></script>
+<link rel="stylesheet" href="css/app.css?v=11">
+<script src="js/store.js?v=11"></script>
+<script src="js/layout.js?v=11"></script>
 </head>
 <body>
 <div class="app">
   <script>UI.sidebar('painel');</script>
   <main class="main">
-    <script>UI.topbar(`Olá, <em>${UI.esc((STORE.dados.pessoas[0] || { nome: '' }).nome)}</em>`, { mes: true, pessoas: true, sub: 'Veja e controle suas finanças aqui!' });</script>
+    <script>UI.topbar('Visão geral', { mes: true, sub: 'Veja e controle suas finanças aqui!' });</script>
 
     <div class="aviso-vazio aviso-ano" id="avisoAno" hidden>
       <div><strong id="avisoAnoTitulo"></strong><span>Salve o arquivo do ano e comece o ano novo zerado — cartões, metas e reserva continuam.</span></div>
@@ -38,85 +38,69 @@
         <span>Comece pelas receitas e gastos — ou traga os dados da sua planilha em Configurações.</span>
       </div>
       <div class="aviso-acoes">
-        <a class="btn btn-primary btn-sm" href="lancamentos.html?tipo=receita">Lançar receita</a>
+        <a class="btn btn-primary btn-sm" href="lancamentos.html?tipo=receita&amp;novo=1">Lançar receita</a>
         <a class="btn btn-outline btn-sm" href="configuracoes.html#importar">Importar planilha</a>
       </div>
     </div>
 
-    <!-- Faixa 1: saldo · cartão · análise -->
-    <section class="painel-grade">
-      <div class="panel">
-        <div class="panel-head"><h3>Saldo do mês</h3><a class="plain-link" href="lancamentos.html?tipo=variavel">Gastos</a></div>
-        <div class="saldo-valor"><strong id="saldo">—</strong><span id="saldoSub">receitas − despesas</span></div>
-        <div class="saldo-baixo">
-          <div class="saldo-tendencia">
-            <svg viewBox="0 0 70 26" id="sparkline" aria-hidden="true"></svg>
-            <span class="variacao" id="variacao"></span>
-            <span>comparado ao mês anterior</span>
-          </div>
-          <div class="pilulas" id="pilulasDespesas" aria-label="Despesas dos últimos meses"></div>
+    <section class="dash">
+      <div class="panel dash-saldo">
+        <div class="panel-head"><h3>Saldo do ano</h3><a class="plain-link" href="reserva.html">Ver reserva</a></div>
+        <strong class="saldo-grande" id="saldoAno">—</strong>
+        <span class="saldo-sub" id="saldoAnoSub"></span>
+        <div class="saldo-botoes">
+          <a class="btn btn-claro btn-sm" href="lancamentos.html?tipo=receita&amp;novo=1"><svg class="icon-sm"><use href="#i-mais"/></svg>Receita</a>
+          <a class="btn btn-claro btn-sm" href="lancamentos.html?tipo=variavel&amp;novo=1"><svg class="icon-sm"><use href="#i-menos"/></svg>Despesa</a>
         </div>
       </div>
 
-      <div class="panel cartao-destaque">
-        <div class="panel-head"><h3>Cartões</h3><a class="plain-link" href="cartoes.html">Ver todos</a></div>
-        <div class="cc-carrossel" id="carrossel"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><h3>Análise do mês</h3></div>
-        <div class="legenda-pontos" id="legendaMedidor"></div>
-        <div class="medidor">
-          <svg viewBox="0 0 220 122" id="medidor" aria-hidden="true"></svg>
-          <div class="medidor-centro"><strong id="medidorValor">—</strong><span id="medidorRotulo">poupado</span></div>
+      <div class="panel dash-resumo">
+        <div class="panel-head"><h3>Resumo do mês</h3><span class="panel-sub" id="resumoMes"></span></div>
+        <div class="mini-cards">
+          <a class="mini-card mc-receita" href="lancamentos.html?tipo=receita"><span><svg class="icon-sm"><use href="#i-entrada"/></svg>Receitas</span><strong id="mcReceitas">—</strong><small id="mcReceitasSub"></small></a>
+          <a class="mini-card mc-despesa" href="lancamentos.html?tipo=variavel"><span><svg class="icon-sm"><use href="#i-carrinho"/></svg>Despesas</span><strong id="mcDespesas">—</strong><small id="mcDespesasSub"></small></a>
+          <div class="mini-card mc-sobra"><span><svg class="icon-sm"><use href="#i-cofre"/></svg><b id="mcSobraRot">Sobrou</b></span><strong id="mcSobra">—</strong><small id="mcSobraSub"></small></div>
         </div>
       </div>
-    </section>
 
-    <!-- Faixa 2: últimos lançamentos · despesas & receitas + reserva -->
-    <section class="painel-grade-2">
-      <div class="panel">
-        <div class="panel-head"><h3>Últimos lançamentos</h3><a class="plain-link" href="lancamentos.html?tipo=variavel">Ver todos</a></div>
+      <div class="panel dash-saude">
+        <div class="panel-head"><h3>Nota de saúde</h3></div>
+        <div class="saude-topo"><strong id="saudeNota">—</strong><span class="saude-de">/100</span><span class="saude-nivel" id="saudeNivel"></span></div>
+        <div class="barra-trilho saude-barra"><div class="barra-cheia" id="saudeBarra"></div></div>
+        <p class="saude-dica" id="saudeDica"></p>
+      </div>
+
+      <div class="panel dash-fluxo">
+        <div class="panel-head">
+          <h3>Fluxo de caixa</h3>
+          <div class="legenda-linha"><span><i style="background:var(--azul)"></i>Receitas</span><span><i style="background:var(--amarelo)"></i>Despesas</span></div>
+        </div>
+        <div class="fluxo" id="fluxo" aria-label="Receitas e despesas dos últimos 6 meses"></div>
+      </div>
+
+      <div class="panel dash-gastos">
+        <div class="panel-head"><h3>Gastos</h3><span class="panel-sub" id="gastosSub"></span></div>
+        <div class="rosca">
+          <svg viewBox="0 0 120 120" id="rosca" aria-hidden="true"></svg>
+          <div class="rosca-centro"><span>Maior gasto</span><strong id="roscaPct">—</strong></div>
+        </div>
+        <ul class="rosca-legenda" id="roscaLegenda"></ul>
+      </div>
+
+      <div class="panel dash-cartoes">
+        <div class="panel-head"><h3>Cartões</h3><a class="plain-link" href="cartoes.html">Ver cartões</a></div>
+        <div class="cartao-nav">
+          <button type="button" class="mes-btn" id="cartaoAnt" aria-label="Cartão anterior"><svg class="icon-sm"><use href="#i-chevron"/></svg></button>
+          <div class="cartao-slot" id="cartaoSlot"></div>
+          <button type="button" class="mes-btn" id="cartaoProx" aria-label="Próximo cartão"><svg class="icon-sm"><use href="#i-chevronDir"/></svg></button>
+        </div>
+        <div id="cartaoInfo"></div>
+      </div>
+
+      <div class="panel dash-ultimas">
+        <div class="panel-head"><h3>Últimas transações</h3><a class="plain-link" href="lancamentos.html?tipo=variavel">Ver todas</a></div>
         <ul class="ultimos" id="ultimos"></ul>
       </div>
-      <div class="coluna">
-        <div class="panel">
-          <div class="panel-head"><h3>Despesas &amp; receitas</h3><span class="panel-sub" id="drSub"></span></div>
-          <div class="dr-numeros">
-            <div><strong id="pctDespesas">—</strong><span>da renda foi gasta</span></div>
-            <div><strong id="pctSobra">—</strong><span>sobrou</span></div>
-          </div>
-          <div class="dr-barras" id="drBarras"></div>
-          <div class="barras" style="margin-top:18px" id="formas"></div>
-        </div>
-        <a class="card-escuro" href="reserva.html">
-          <div class="card-escuro-texto">
-            <svg class="icon"><use href="#i-diamante"/></svg>
-            <div><strong id="reservaValor">Reserva</strong><span id="reservaSub"></span></div>
-          </div>
-          <span class="btn btn-claro btn-sm">Ver reserva</span>
-        </a>
-      </div>
-    </section>
-
-    <!-- Faixa 3: categorias · pessoas -->
-    <section class="grid-2 grid-2-igual">
-      <div class="panel">
-        <div class="panel-head"><h3>Principais categorias</h3><span class="panel-sub" id="catSub"></span></div>
-        <div class="barras" id="categorias"></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h3>Receitas por pessoa</h3><a class="plain-link" href="lancamentos.html?tipo=receita">Ver receitas</a></div>
-        <div class="barras" id="pessoas"></div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <h3 id="tituloAno">Receitas x despesas</h3>
-        <div class="legenda-linha"><span><i style="background:var(--azul)"></i>Receitas</span><span><i style="background:var(--amarelo)"></i>Despesas</span></div>
-      </div>
-      <div class="ano-grafico" id="graficoAno"></div>
     </section>
 
     <section class="panel">
@@ -124,7 +108,8 @@
       <div class="resumo-grid" id="resumoAno"></div>
     </section>
   </main>
+  </div>
 </div>
-<script src="js/painel.js?v=10"></script>
+<script src="js/painel.js?v=11"></script>
 </body>
 </html>

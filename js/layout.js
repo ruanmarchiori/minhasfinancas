@@ -29,6 +29,10 @@ const UI = (function () {
     olho: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>',
     olhoFechado: '<path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a15.7 15.7 0 0 1-3.2 4.1M6.2 6.8C3.7 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 3.4-.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
     seta: '<path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+    busca: '<circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+    sino: '<path d="M6 17v-5.5a6 6 0 0 1 12 0V17l1.5 2h-15z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 21a2.2 2.2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    pessoa: '<circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M5 20c.9-3.6 3.6-5.5 7-5.5s6.1 1.9 7 5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+    menos: '<line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
     fechar: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
     sol: '<circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
     lua: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
@@ -38,15 +42,15 @@ const UI = (function () {
   };
 
   const MENU = [
-    { id: 'painel', href: 'index.html', icone: 'home', nome: 'Painel' },
-    { id: 'receita', href: 'lancamentos.html?tipo=receita', icone: 'entrada', nome: 'Receitas' },
-    { id: 'fixo', href: 'lancamentos.html?tipo=fixo', icone: 'fixo', nome: 'Gastos fixos' },
-    { id: 'variavel', href: 'lancamentos.html?tipo=variavel', icone: 'carrinho', nome: 'Gastos variáveis' },
-    { id: 'cartoes', href: 'cartoes.html', icone: 'cartao', nome: 'Cartões' },
-    { id: 'reserva', href: 'reserva.html', icone: 'cofre', nome: 'Reserva' },
-    { id: 'metas', href: 'metas.html', icone: 'alvo', nome: 'Metas' },
-    { id: 'educacao', href: 'educacao.html', icone: 'livro', nome: 'Educação financeira' },
-    { id: 'configuracoes', href: 'configuracoes.html', icone: 'engrenagem', nome: 'Configurações' }
+    { id: 'painel', href: 'index.html', icone: 'home', nome: 'Visão geral', grupo: 'Menu principal' },
+    { id: 'receita', href: 'lancamentos.html?tipo=receita', icone: 'entrada', nome: 'Receitas', grupo: 'Menu principal' },
+    { id: 'fixo', href: 'lancamentos.html?tipo=fixo', icone: 'fixo', nome: 'Gastos fixos', grupo: 'Menu principal' },
+    { id: 'variavel', href: 'lancamentos.html?tipo=variavel', icone: 'carrinho', nome: 'Gastos variáveis', grupo: 'Menu principal' },
+    { id: 'cartoes', href: 'cartoes.html', icone: 'cartao', nome: 'Cartões', grupo: 'Menu principal' },
+    { id: 'reserva', href: 'reserva.html', icone: 'cofre', nome: 'Reserva', grupo: 'Planejamento' },
+    { id: 'metas', href: 'metas.html', icone: 'alvo', nome: 'Metas', grupo: 'Planejamento' },
+    { id: 'educacao', href: 'educacao.html', icone: 'livro', nome: 'Educação financeira', grupo: 'Aprender' },
+    { id: 'configuracoes', href: 'configuracoes.html', icone: 'engrenagem', nome: 'Configurações', grupo: '' }
   ];
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -57,36 +61,80 @@ const UI = (function () {
       Object.entries(ICONES).map(([n, p]) => `<symbol id="i-${n}" viewBox="0 0 24 24">${p}</symbol>`).join('') + '</svg>';
   }
 
-  const link = (i, ativo) => `<a href="${i.href}" class="nav-link${i.id === ativo ? ' active' : ''}"${i.id === ativo ? ' aria-current="page"' : ''} aria-label="${i.nome}">${ico(i.icone)}<span class="dica-nav">${i.nome}</span></a>`;
+  const link = (i, ativo, curto) => `<a href="${i.href}" class="nav-link${i.id === ativo ? ' active' : ''}"${i.id === ativo ? ' aria-current="page"' : ''}>${ico(i.icone)}<span>${curto || i.nome}</span></a>`;
 
-  /* Cabeçalho + menu. No celular o menu vira uma pílula embaixo com os atalhos principais e
-     um botão "Mais" que abre as outras telas. */
+  /* Menu lateral verde com grupos (computador) + barra do topo (saudação, busca, avisos) +
+     barra inferior no celular. A página fica dentro de .conteudo (aberto aqui e fechado pelo
+     HTML com </div> depois do </main>). */
   function sidebar(ativo) {
-    const principais = ['painel', 'receita', 'variavel', 'cartoes'];
-    const nome = (STORE.dados.pessoas[0] || { nome: '' }).nome;
+    const nome = (STORE.dados.pessoas[0] || { nome: '' }).nome || 'Você';
+    const email = (window.APP_CONFIG && APP_CONFIG.localAuth && APP_CONFIG.localAuth.email) || '';
+    const grupos = [...new Set(MENU.map(i => i.grupo).filter(Boolean))];
+    const principais = [['painel', 'Início'], ['receita', 'Receitas'], ['variavel', 'Gastos'], ['cartoes', 'Cartões']];
+    const nAvisos = STORE.avisos().length;
     document.write(sprite() + `
-      <header class="cabecalho">
-        <a class="marca" href="index.html" aria-label="Início">
-          <span class="marca-logo">${ico('logo')}</span>
-          <span class="marca-texto"><small>Controle financeiro</small><strong>Finanças</strong></span>
-        </a>
-        <div class="cabecalho-acoes">
-          <button type="button" class="btn-redondo" id="btnTema" aria-label="Alternar modo escuro">${ico(window.THEME && THEME.get() === 'dark' ? 'sol' : 'lua')}</button>
-          <a class="btn-redondo so-desktop" href="configuracoes.html" aria-label="Configurações">${ico('engrenagem')}</a>
-          <span class="avatar" title="${esc(nome)}">${esc(nome.slice(0, 1).toUpperCase() || 'R')}</span>
-        </div>
-      </header>
       <aside class="sidebar">
-        <nav class="pilula" aria-label="Menu">${MENU.filter(i => i.id !== 'configuracoes').map(i => link(i, ativo)).join('')}</nav>
-        <div class="pilula">
+        <a class="marca" href="index.html" aria-label="Início"><span class="marca-logo">${ico('logo')}</span><span class="marca-texto"><strong>Finanças</strong></span></a>
+        ${grupos.map(g => `<nav class="menu-grupo" aria-label="${g}"><div class="menu-titulo">${g}</div>${MENU.filter(i => i.grupo === g).map(i => link(i, ativo)).join('')}</nav>`).join('')}
+        <div class="menu-rodape">
           ${link(MENU.find(i => i.id === 'configuracoes'), ativo)}
-          <button type="button" class="nav-link" id="logoutBtn" aria-label="Sair">${ico('sair')}<span class="dica-nav">Sair</span></button>
+          <button type="button" class="nav-link" id="logoutBtn">${ico('sair')}<span>Sair</span></button>
+          <div class="usuario"><span class="avatar">${esc(nome.slice(0, 2).toUpperCase())}</span><span class="usuario-info"><strong>${esc(nome)}</strong><span>${esc(email)}</span></span></div>
         </div>
       </aside>
+      <div class="conteudo">
+      <header class="cabecalho">
+        <a class="marca-logo so-celular" href="index.html" aria-label="Início" style="background:var(--menu);color:#fff">${ico('logo')}</a>
+        <span class="chip-perfil">${ico('pessoa', 'icon-sm')}Pessoal</span>
+        <span class="saudacao">Olá, ${esc(nome)}</span>
+        <span class="cabecalho-espaco"></span>
+        <form class="busca" id="formBusca" role="search"><svg class="icon-sm" aria-hidden="true"><use href="#i-busca"/></svg><input type="search" id="campoBusca" placeholder="Buscar transações" aria-label="Buscar transações" autocomplete="off"></form>
+        <div class="cabecalho-acoes">
+          <button type="button" class="btn-redondo so-celular" id="btnBuscaCel" aria-label="Buscar transações">${ico('busca')}</button>
+          <button type="button" class="btn-redondo" id="btnAvisos" aria-label="Avisos${nAvisos ? ` (${nAvisos})` : ''}">${ico('sino')}${nAvisos ? `<span class="selo-aviso">${nAvisos}</span>` : ''}</button>
+          <button type="button" class="btn-redondo" id="btnTema" aria-label="Alternar modo escuro">${ico(window.THEME && THEME.get() === 'dark' ? 'sol' : 'lua')}</button>
+        </div>
+      </header>
       <nav class="nav-baixo" aria-label="Menu">
-        ${MENU.filter(i => principais.includes(i.id)).map(i => link(i, ativo)).join('')}
-        <button type="button" class="nav-link${principais.includes(ativo) ? '' : ' active'}" id="btnMais" aria-label="Mais telas">${ico('grade')}</button>
+        ${principais.map(([id, curto]) => link(MENU.find(i => i.id === id), ativo, curto)).join('')}
+        <button type="button" class="nav-link${principais.some(p => p[0] === ativo) ? '' : ' active'}" id="btnMais" aria-label="Mais telas">${ico('grade')}<span>Mais</span></button>
       </nav>`);
+  }
+
+  /* Busca de transações: resultados numa janela; tocar abre o mês e a tela certos. */
+  function abrirBusca(textoInicial) {
+    const j = modal({
+      titulo: 'Buscar transações',
+      html: `<label class="field"><span>Descrição, categoria, pessoa, cartão ou valor</span><input type="search" id="buscaTexto" value="${esc(textoInicial || '')}" autocomplete="off"></label><div id="buscaLista" style="margin-top:12px"></div>`
+    });
+    const campo = j.el.querySelector('#buscaTexto');
+    const lista = j.el.querySelector('#buscaLista');
+    const TIPO_PAG = { receita: 'receita', fixo: 'fixo', variavel: 'variavel' };
+    function mostrar() {
+      const res = STORE.buscar(campo.value);
+      if (campo.value.trim().length < 2) { lista.innerHTML = '<p class="vazio-curto">Digite pelo menos 2 letras.</p>'; return; }
+      lista.innerHTML = res.length ? res.map(l => {
+        const c = STORE.categoria(l.categoria), p = STORE.pessoa(l.pessoa);
+        const rec = l.tipo === 'receita';
+        return `<a class="busca-res" href="lancamentos.html?tipo=${TIPO_PAG[l.tipo]}" data-mes="${l.mes}">
+          <span class="ultimo-icone">${rec ? '💰' : esc(c ? c.icone : '•')}</span>
+          <span class="ultimo-info"><strong>${esc(l.descricao || (rec ? l.tipoReceita : c ? c.nome : 'Gasto'))}</strong><span>${esc([rec ? (p && p.nome) : (c && c.nome), STORE.nomeMes(l.mes), l.parcela ? `parcela ${l.parcela.n}/${l.parcela.de}` : ''].filter(Boolean).join(' · '))}</span></span>
+          <span class="ultimo-valor${rec ? ' is-receita' : ''}">${rec ? '+' : '−'}${brl(l.valor)}</span></a>`;
+      }).join('') : '<p class="vazio-curto">Nada encontrado.</p>';
+      lista.querySelectorAll('[data-mes]').forEach(a => a.addEventListener('click', () => STORE.setMesRef(a.dataset.mes)));
+    }
+    campo.addEventListener('input', mostrar);
+    mostrar();
+    setTimeout(() => { campo.focus(); campo.setSelectionRange(campo.value.length, campo.value.length); }, 40);
+  }
+
+  /* Avisos do sino. */
+  function abrirAvisos() {
+    const lista = STORE.avisos();
+    modal({
+      titulo: 'Avisos',
+      html: lista.length ? lista.map(a => `<a class="aviso-item t-${a.tipo}" href="${a.href}"><i></i><span>${esc(a.texto)}</span></a>`).join('') : '<p class="vazio-curto">Tudo em dia. Nenhum aviso agora.</p>'
+    });
   }
 
   /* Folha com todas as telas (botão "Mais" do celular). */
@@ -111,7 +159,6 @@ const UI = (function () {
           ${o.sub ? `<p>${o.sub}</p>` : ''}
         </div>
         <div class="topbar-actions">
-          ${o.pessoas ? `<div class="pessoas-pilula" title="Pessoas da casa">${STORE.dados.pessoas.map((p, i) => `<span class="pessoa-bolha" style="background:${CORES_PESSOA[i % CORES_PESSOA.length]}" title="${esc(p.nome)}">${esc(p.nome.slice(0, 1).toUpperCase())}</span>`).join('')}</div>` : ''}
           ${o.mes ? `<div class="mes-seletor" role="group" aria-label="Mês de referência">
             <button type="button" class="mes-btn" id="mesAnterior" aria-label="Mês anterior">${ico('chevron', 'icon-sm')}</button>
             <label class="mes-atual"><span id="mesTexto"></span><input type="month" id="mesInput" aria-label="Escolher mês"></label>
@@ -232,6 +279,7 @@ const UI = (function () {
     { id: 'nubank', nome: 'Nubank' },
     { id: 'ourocard', nome: 'Ourocard' },
     { id: 'smiles', nome: 'Smiles Gold' },
+    { id: 'verde', nome: 'Verde' },
     { id: 'azul', nome: 'Azul' },
     { id: 'grafite', nome: 'Grafite' }
   ];
@@ -241,7 +289,7 @@ const UI = (function () {
     if (/smiles/.test(n)) return 'smiles';
     if (/nu|nubank/.test(n)) return 'nubank';
     if (/ourocard|banco do brasil|bb/.test(n)) return 'ourocard';
-    return 'azul';
+    return 'verde';
   }
   function bandeiraDoCartao(c, estilo) {
     const b = (c.bandeira || '').toLowerCase();
@@ -249,7 +297,7 @@ const UI = (function () {
     if (/visa/.test(b)) return 'visa';
     if (/elo/.test(b)) return 'elo';
     if (/amex|american/.test(b)) return 'amex';
-    return estilo === 'nubank' ? 'master' : estilo === 'azul' || estilo === 'grafite' ? 'master' : 'visa';
+    return estilo === 'nubank' || estilo === 'azul' || estilo === 'grafite' || estilo === 'verde' ? 'master' : 'visa';
   }
   function marcaBandeira(tipo) {
     if (tipo === 'master') return '<span class="cc-master" aria-label="Mastercard"><i></i><i></i></span>';
@@ -286,6 +334,14 @@ const UI = (function () {
     if (sair) sair.addEventListener('click', () => AUTH.logout());
     const mais = document.getElementById('btnMais');
     if (mais) mais.addEventListener('click', abrirMais);
+    const fb = document.getElementById('formBusca');
+    if (fb) fb.addEventListener('submit', (e) => { e.preventDefault(); abrirBusca(document.getElementById('campoBusca').value); });
+    const cb = document.getElementById('campoBusca');
+    if (cb) { cb.readOnly = true; const abrir = () => abrirBusca(''); cb.addEventListener('click', abrir); cb.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key.length === 1) { e.preventDefault(); abrirBusca(e.key.length === 1 ? e.key : ''); } }); }
+    const bc = document.getElementById('btnBuscaCel');
+    if (bc) bc.addEventListener('click', () => abrirBusca(''));
+    const av = document.getElementById('btnAvisos');
+    if (av) av.addEventListener('click', abrirAvisos);
     const tema = document.getElementById('btnTema');
     if (tema) tema.addEventListener('click', () => {
       const escuro = THEME.get() !== 'dark';

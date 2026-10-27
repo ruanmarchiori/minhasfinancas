@@ -397,5 +397,10 @@
     });
     UI.ligarMes(render);
     render();
+    /* Atalho "+ Receita / − Despesa" da Visão geral */
+    if (new URLSearchParams(location.search).get('novo') === '1') {
+      history.replaceState(null, '', location.pathname + '?tipo=' + TIPO);
+      abrirForm(null);
+    }
   });
 })();

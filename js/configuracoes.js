@@ -141,7 +141,89 @@
     });
   }
 
-  function renderTudo() { renderPessoas(); renderCategorias(); renderInfo(); renderFechar(); }
+  /* ===== Ciclo dos cartões ===== */
+  function renderCiclos() {
+    const el = document.getElementById('ciclos');
+    const cs = D().cartoes;
+    if (!cs.length) { el.innerHTML = '<p class="vazio-curto">Nenhum cartão cadastrado. <a href="cartoes.html">Cadastrar</a></p>'; return; }
+    const dm = (iso) => iso ? iso.split('-').reverse().join('/') : '—';
+    const mes = STORE.mesRef();
+    el.innerHTML = cs.map((c) => {
+      const exc = Object.entries(c.excecoes || {}).sort();
+      return `<div class="ciclo-cartao" data-cartao="${c.id}">
+        <div class="ciclo-topo"><strong>💳 ${UI.esc(c.nome)}</strong><span class="panel-sub">${STORE.temCiclo(c) ? `Fatura de ${STORE.nomeMes(mes)}: fecha ${dm(STORE.fechamentoFatura(c, mes))} · vence ${dm(STORE.vencimentoFatura(c, mes))}` : 'Informe o vencimento'}</span></div>
+        <div class="ciclo-dias">
+          <label class="field"><span>Dia do fechamento</span><input inputmode="numeric" maxlength="2" data-campo="fechamento" value="${c.fechamento || ''}" placeholder="${STORE.diaFechamento(c) ? 'estimado: ' + STORE.diaFechamento(c) : 'Ex.: 3'}"></label>
+          <label class="field"><span>Dia do vencimento</span><input inputmode="numeric" maxlength="2" data-campo="vencimento" value="${c.vencimento || ''}" placeholder="Ex.: 10"></label>
+        </div>
+        <div>
+          <div class="sub-titulo">Exceções (datas de uma fatura específica)</div>
+          <ul class="excecoes">${exc.length ? exc.map(([m, e]) => `<li><span><strong>${STORE.nomeMes(m, true)}</strong> · fecha ${dm(e.fechamento || STORE.fechamentoFatura({ ...c, excecoes: {} }, m))} · vence ${dm(e.vencimento || STORE.vencimentoFatura({ ...c, excecoes: {} }, m))}</span><button type="button" class="icon-remove" data-tirar="${m}" aria-label="Remover exceção">${UI.ico('lixo', 'icon-sm')}</button></li>`).join('') : '<li class="vazio-curto">Nenhuma. Todas as faturas seguem os dias acima.</li>'}</ul>
+          ${STORE.temCiclo(c) ? `<button type="button" class="btn btn-outline btn-sm" data-nova-excecao style="margin-top:8px">${UI.ico('mais', 'icon-sm')} Mudar datas de uma fatura</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('[data-cartao]').forEach((box) => {
+      const c = STORE.cartao(box.dataset.cartao);
+      box.querySelectorAll('[data-campo]').forEach(inp => inp.addEventListener('change', () => {
+        const v = parseInt(inp.value, 10);
+        if (inp.value && !(v >= 1 && v <= 31)) { UI.toast('Dia inválido (1 a 31).'); inp.value = c[inp.dataset.campo] || ''; return; }
+        c[inp.dataset.campo] = v || '';
+        STORE.salvar();
+        renderCiclos();
+        UI.toast('Datas do cartão salvas.');
+      }));
+      box.querySelectorAll('[data-tirar]').forEach(b => b.addEventListener('click', () => {
+        STORE.setExcecaoFatura(c, b.dataset.tirar, '', '');
+        renderCiclos();
+      }));
+      const nova = box.querySelector('[data-nova-excecao]');
+      if (nova) nova.addEventListener('click', () => novaExcecao(c));
+    });
+  }
+  function novaExcecao(c) {
+    const m0 = STORE.mesRef();
+    const opcoes = [];
+    for (let i = -1; i <= 6; i++) opcoes.push(STORE.somarMes(m0, i));
+    const janela = UI.modal({
+      titulo: `Datas de uma fatura — ${c.nome}`,
+      html: `<form novalidate>
+        <label class="field"><span>Fatura</span><select name="mes">${opcoes.map(m => `<option value="${m}"${m === m0 ? ' selected' : ''}>${STORE.nomeMes(m, true)}</option>`).join('')}</select></label>
+        <div class="form-grid" style="margin-top:14px">
+          <label class="field"><span>Fecha em</span><input type="date" name="fechamento"></label>
+          <label class="field"><span>Vence em</span><input type="date" name="vencimento"></label>
+        </div>
+        <p class="field-hint" style="margin:10px 0 0">Compras feitas antes da data de fechamento entram nesta fatura.</p>
+        <p class="auth-msg" data-erro></p>
+        <div class="form-actions"><div class="form-actions-right"><button type="submit" class="btn btn-lime">Salvar datas</button></div></div>
+      </form>`
+    });
+    const form = janela.el.querySelector('form');
+    const preencher = () => {
+      const m = form.mes.value;
+      const atual = (c.excecoes || {})[m] || {};
+      const semExc = { ...c, excecoes: {} };
+      form.fechamento.value = atual.fechamento || STORE.fechamentoFatura(semExc, m) || '';
+      form.vencimento.value = atual.vencimento || STORE.vencimentoFatura(semExc, m) || '';
+    };
+    form.mes.addEventListener('change', preencher);
+    preencher();
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = form.fechamento.value, v = form.vencimento.value;
+      if (!f || !v) { form.querySelector('[data-erro]').textContent = 'Informe as duas datas.'; return; }
+      if (f >= v) { form.querySelector('[data-erro]').textContent = 'O fechamento precisa ser antes do vencimento.'; return; }
+      const semExc = { ...c, excecoes: {} };
+      const m = form.mes.value;
+      const iguais = f === STORE.fechamentoFatura(semExc, m) && v === STORE.vencimentoFatura(semExc, m);
+      STORE.setExcecaoFatura(c, m, iguais ? '' : f, iguais ? '' : v);
+      janela.fechar();
+      renderCiclos();
+      UI.toast(iguais ? 'Datas iguais às normais — nenhuma exceção criada.' : `Fatura de ${STORE.nomeMes(m)} ajustada.`);
+    });
+  }
+
+  function renderTudo() { renderPessoas(); renderCategorias(); renderInfo(); renderFechar(); renderCiclos(); }
 
   document.addEventListener('DOMContentLoaded', () => {
     renderTudo();
@@ -233,6 +315,6 @@
       UI.toast('Dados apagados.');
     });
 
-    if (location.hash === '#importar' || location.hash === '#fechar') document.getElementById(location.hash.slice(1)).scrollIntoView();
+    if (['#importar', '#fechar', '#ciclo'].includes(location.hash)) document.getElementById(location.hash.slice(1)).scrollIntoView();
   });
 })();
