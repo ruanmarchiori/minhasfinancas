@@ -50,7 +50,7 @@
     const c = ordem[cartaoAtual];
     const f = STORE.fatura(c.id, m);
     el.innerHTML = `<a href="cartoes.html" aria-label="Abrir cartões">${UI.cartaoHTML(c, { rotulo: `Fatura de ${STORE.nomeMes(m)}`, valor: UI.brl(f) })}</a>
-      ${c.limite ? `<div class="cartao-uso"><div class="cartao-uso-topo"><span>${UI.pct(f / c.limite)} do limite</span><span>${UI.brl(c.limite - f)} livre</span></div><div class="barra-trilho"><div class="barra-cheia${f / c.limite > .8 ? ' is-alerta' : ''}" style="width:${Math.min(100, (f / c.limite) * 100)}%"></div></div></div>` : ''}
+      ${c.limite ? (() => { const u = STORE.usoLimite(c); return `<div class="cartao-uso"><div class="cartao-uso-topo"><span>Usado ${UI.brl(u.usado)}</span><span>${UI.brl(u.disponivel)} livre</span></div><div class="barra-trilho"><div class="barra-cheia${u.pct > .8 ? ' is-alerta' : ''}" style="width:${Math.min(100, u.pct * 100)}%"></div></div></div>`; })() : ''}
       ${ordem.length > 1 ? `<div class="cc-pontos">${ordem.map((x, i) => `<button type="button" class="${i === cartaoAtual ? 'ativo' : ''}" data-i="${i}" aria-label="Ver ${UI.esc(x.nome)}"></button>`).join('')}</div>` : ''}`;
     el.querySelectorAll('[data-i]').forEach(b => b.addEventListener('click', () => { cartaoAtual = Number(b.dataset.i); cartoes(m); }));
   }

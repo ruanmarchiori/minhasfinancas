@@ -45,6 +45,21 @@ O **mês de referência** (o seletor no topo, equivalente à célula K1 do Dashb
 todas as telas. Nas telas de lançamento, a visão **Ano** mostra a grade da planilha
 (categoria × Jan…Dez, Total e Média).
 
+## Cartão de crédito: fatura, fechamento e limite
+
+Modelo dos bancos e de apps como Mobills/Organizze (`js/store.js`, seção "Ciclo do cartão"):
+
+- A fatura `AAAA-MM` é a que **vence** naquele mês. Cartão tem dia de **vencimento** e de
+  **fechamento** (sem fechamento: vencimento − 7). Compra antes do fechamento entra nessa
+  fatura; no dia do fechamento ou depois, vai para a seguinte. No formulário, com cartão, a
+  pessoa informa a **data da compra** e a fatura é sugerida (pode trocar).
+- **Limite:** disponível = limite − soma do que falta pagar em todas as faturas, **inclusive as
+  futuras** (parcelas). Compra de R$ 2.000 em 10x tira R$ 2.000 do limite na hora.
+- **Pagar fatura** (total ou parcial) registra o pagamento (`pagamentosFatura`) e devolve o valor
+  ao limite. Não é gasto novo — as compras já foram contadas.
+- Situação: aberta → fechada → paga / vencida. Faturas vencidas sem pagamento ocupam o limite;
+  "Já paguei — marcar como pagas" quita as antigas de uma vez.
+
 ## Compras parceladas
 
 No formulário de gasto, **Compra parcelada**: número de parcelas, "estou na parcela" (para

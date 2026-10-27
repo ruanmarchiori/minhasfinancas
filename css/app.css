@@ -185,6 +185,8 @@ dl,dd{margin:0;}
 .field-full{grid-column:1/-1;}
 .field-hint{font-size:.74rem;color:var(--suave);font-weight:500;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-grid > *{min-width:0;}
+.field select{width:100%;min-width:0;text-overflow:ellipsis;}
 .checkbox-field{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.9rem;}
 .checkbox-field input{width:18px;height:18px;accent-color:var(--azul-forte);}
 .form-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;}
@@ -511,6 +513,17 @@ dl,dd{margin:0;}
 .lista-proximas li span{font-size:.76rem;color:var(--suave);}
 .lista-proximas li > strong{white-space:nowrap;font-size:1rem;}
 .so-estreito{display:none;}
+.fatura-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 6px;font-size:.78rem;color:var(--suave);flex-wrap:wrap;}
+.status-fatura{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;font-size:.72rem;font-weight:800;background:var(--painel-2);color:var(--tinta-2);}
+.status-fatura.st-aberta{background:var(--azul-claro);color:var(--azul-forte);}
+.status-fatura.st-fechada{background:var(--amarelo-claro);color:#8a6d00;}
+:root[data-theme="dark"] .status-fatura.st-fechada{color:var(--amarelo);}
+.status-fatura.st-vencida{background:var(--vermelho-claro);color:var(--vermelho);}
+.status-fatura.st-paga{background:var(--verde-claro);color:var(--verde);}
+.aviso-vencidas{margin:0 6px;font-size:.8rem;}
+.bloco-cartao{display:flex;flex-direction:column;gap:10px;}
+.ciclo-info{margin:0;font-size:.8rem;color:var(--tinta-2);line-height:1.5;}
+.ciclo-info em{color:var(--vermelho);font-style:normal;font-weight:700;}
 .tabela-proximas td[data-detalhe]{cursor:pointer;border-radius:8px;}
 .tabela-proximas td[data-detalhe]:hover{background:var(--azul-claro);}
 .lista-proximas li[data-detalhe]{cursor:pointer;}

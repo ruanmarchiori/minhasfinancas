@@ -194,10 +194,17 @@
         </div>
       </div>` : ''}
       ${l.parcela ? `<p class="aviso-inline">Parcela <strong>${l.parcela.n} de ${l.parcela.de}</strong> de uma compra de ${UI.brl(l.parcela.total)}. Alterações valem só para esta parcela.</p>` : ''}
-      <div class="form-grid">
-        <label class="field"><span>${!RECEITA && novo ? 'Mês (da fatura da 1ª parcela lançada)' : 'Mês'}</span><input type="month" name="mes" value="${l.mes}" required></label>
+      <div class="form-grid" data-bloco-mes>
+        <label class="field"><span>Mês</span><input type="month" name="mes" value="${l.mes}" required></label>
         <label class="field"><span>Dia (opcional)</span><input name="dia" inputmode="numeric" maxlength="2" placeholder="—" value="${l.dia || ''}"></label>
       </div>
+      ${!RECEITA ? `<div class="bloco-cartao" data-bloco-cartao hidden>
+        <div class="form-grid">
+          <label class="field"><span>Data da compra</span><input type="date" name="dataCompra"></label>
+          <label class="field"><span data-rotulo-fatura>Entra na fatura</span><select name="faturaMes"></select></label>
+        </div>
+        <p class="ciclo-info" data-ciclo></p>
+      </div>` : ''}
       <p class="auth-msg" data-erro></p>
       <div class="form-actions">
         ${novo ? '' : `<div class="botoes-excluir"><button type="button" class="btn btn-danger" data-excluir>${UI.ico('lixo', 'icon-sm')} Excluir${l.parcela ? ' esta' : ''}</button>${l.parcela && l.parcela.n < l.parcela.de ? '<button type="button" class="btn btn-danger" data-excluir-proximas>Excluir esta e as próximas</button>' : ''}</div>`}
@@ -224,8 +231,67 @@
       });
     }
 
-    /* Parcelado: mostra/oculta os campos e o resumo "10x de R$ 150,00 — de Jul/2026 a Abr/2027". */
     const cx = form.parcelado;
+    /* ===== Compra no cartão: a data da compra define a fatura (dia de fechamento) ===== */
+    const blocoCartao = form.querySelector('[data-bloco-cartao]');
+    const blocoMes = form.querySelector('[data-bloco-mes]');
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const dm = (iso) => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
+    const cartaoAtual = () => { if (RECEITA) return null; const c = STORE.cartao(form.forma.value); return c && STORE.temCiclo(c) ? c : null; };
+    const modoCartao = () => !!cartaoAtual();
+    const mesEfetivo = () => {
+      if (!modoCartao()) return form.mes.value;
+      if (!form.faturaMes.value) trocarForma(false);
+      return form.faturaMes.value;
+    };
+    function preencherFaturas(sugerida, escolhida) {
+      const c = cartaoAtual();
+      const opcoes = [];
+      for (let i = -2; i <= 3; i++) opcoes.push(STORE.somarMes(sugerida, i));
+      if (escolhida && !opcoes.includes(escolhida)) opcoes.push(escolhida);
+      form.faturaMes.innerHTML = opcoes.sort().map(m => `<option value="${m}"${m === escolhida ? ' selected' : ''}>${STORE.nomeMes(m)} · vence ${dm(STORE.vencimentoFatura(c, m))}${m === sugerida ? ' (pela data)' : ''}</option>`).join('');
+    }
+    function infoCiclo() {
+      const c = cartaoAtual();
+      if (!c) return;
+      const m = form.faturaMes.value;
+      const sug = form.dataCompra.value ? STORE.faturaDaCompra(c, form.dataCompra.value) : m;
+      const ini = form.inicio ? parseInt(form.inicio.value, 10) || 1 : 1;
+      form.querySelector('[data-rotulo-fatura]').textContent = (cx && cx.checked) ? (ini > 1 ? `Fatura da parcela ${ini}` : 'Fatura da 1ª parcela') : 'Entra na fatura';
+      form.querySelector('[data-ciclo]').innerHTML = `${UI.esc(c.nome)}: fecha dia ${STORE.diaFechamento(c)}${c.fechamento ? '' : ' (estimado)'} e vence dia ${c.vencimento}. Essa fatura fecha em <strong>${dm(STORE.fechamentoFatura(c, m))}</strong> e vence em <strong>${dm(STORE.vencimentoFatura(c, m))}</strong>.${m !== sug && form.dataCompra.value && !(ini > 1) ? ' <em>Diferente do que a data indica.</em>' : ''}`;
+    }
+    function trocarForma(inicial) {
+      if (RECEITA) return;
+      const c = cartaoAtual();
+      blocoCartao.hidden = !c;
+      blocoMes.hidden = !!c;
+      if (!c) return;
+      if (inicial && !novo) {
+        /* lançamento já existente: mantém a fatura onde ele está */
+        form.dataCompra.value = l.dataCompra || `${l.mes}-${pad2(l.dia || 1)}`;
+        preencherFaturas(l.mes, l.mes);
+      } else {
+        if (!form.dataCompra.value) form.dataCompra.value = l.dataCompra || (STORE.mesRef() === STORE.hojeMes() ? STORE.hojeISO() : `${STORE.mesRef()}-01`);
+        const sug = STORE.faturaDaCompra(c, form.dataCompra.value);
+        preencherFaturas(sug, sug);
+      }
+      infoCiclo();
+    }
+    if (!RECEITA) {
+      form.forma.addEventListener('change', () => trocarForma(false));
+      form.dataCompra.addEventListener('change', () => {
+        const c = cartaoAtual();
+        if (!c || !/^\d{4}-\d{2}-\d{2}$/.test(form.dataCompra.value)) return;
+        const sug = STORE.faturaDaCompra(c, form.dataCompra.value);
+        preencherFaturas(sug, sug);
+        infoCiclo();
+        resumoParcelas();
+      });
+      form.faturaMes.addEventListener('change', () => { infoCiclo(); resumoParcelas(); });
+      trocarForma(true);
+    }
+
+    /* Parcelado: mostra/oculta os campos e o resumo "10x de R$ 150,00 — de Jul/2026 a Abr/2027". */
     function parcelamento() {
       const de = parseInt(form.parcelas.value, 10);
       const ini = parseInt(form.inicio.value, 10) || 1;
@@ -239,9 +305,12 @@
       form.querySelector('.parcelado-campos').hidden = !cx.checked;
       const p = parcelamento();
       const r = form.querySelector('[data-resumo]');
-      if (!(p.de >= 2) || !(p.ini >= 1 && p.ini <= p.de) || !(p.v > 0) || !/^\d{4}-\d{2}$/.test(form.mes.value)) { r.textContent = ''; return; }
-      const fim = STORE.somarMes(form.mes.value, p.qtd - 1);
-      r.textContent = `${p.de}x de ${UI.brl(p.porParcela)} (total ${UI.brl(p.total)}) · serão lançadas ${p.qtd} parcela${p.qtd > 1 ? 's' : ''} (${p.ini}/${p.de} a ${p.de}/${p.de}), de ${STORE.nomeMes(form.mes.value)} a ${STORE.nomeMes(fim)}.`;
+      if (modoCartao()) infoCiclo();
+      if (!(p.de >= 2) || !(p.ini >= 1 && p.ini <= p.de) || !(p.v > 0) || !/^\d{4}-\d{2}$/.test(mesEfetivo())) { r.textContent = ''; return; }
+      const fim = STORE.somarMes(mesEfetivo(), p.qtd - 1);
+      const c = cartaoAtual();
+      const limite = c && c.limite ? ` · ocupa ${UI.brl(p.porParcela * p.qtd)} do limite agora (disponível depois: ${UI.brl(STORE.usoLimite(c).disponivel - p.porParcela * p.qtd)})` : '';
+      r.textContent = `${p.de}x de ${UI.brl(p.porParcela)} (total ${UI.brl(p.total)}) · ${p.qtd} parcela${p.qtd > 1 ? 's' : ''} (${p.ini}/${p.de} a ${p.de}/${p.de}), nas faturas de ${STORE.nomeMes(mesEfetivo())} a ${STORE.nomeMes(fim)}${limite}.`;
     }
     if (cx) form.addEventListener('input', resumoParcelas);
     if (cx) form.addEventListener('change', resumoParcelas);
@@ -258,15 +327,18 @@
       const pedirOutro = lancarOutro;
       lancarOutro = false;
       const valor = UI.lerValor(form.valor.value);
-      const dia = parseInt(form.dia.value, 10);
+      const cartao = modoCartao();
+      if (cartao && !/^\d{4}-\d{2}-\d{2}$/.test(form.dataCompra.value)) { erro.textContent = 'Informe a data da compra.'; return; }
+      const dia = cartao ? Number(form.dataCompra.value.slice(8, 10)) : parseInt(form.dia.value, 10);
       if (!(valor > 0)) { erro.textContent = 'Informe um valor maior que zero.'; form.valor.focus(); return; }
-      if (!/^\d{4}-\d{2}$/.test(form.mes.value)) { erro.textContent = 'Escolha o mês.'; return; }
-      if (form.dia.value && !(dia >= 1 && dia <= 31)) { erro.textContent = 'Dia inválido (1 a 31).'; return; }
+      if (!/^\d{4}-\d{2}$/.test(mesEfetivo())) { erro.textContent = 'Escolha o mês.'; return; }
+      if (!cartao && form.dia.value && !(dia >= 1 && dia <= 31)) { erro.textContent = 'Dia inválido (1 a 31).'; return; }
       if (!RECEITA && form.categoria.value === '__nova') { erro.textContent = 'Escolha a categoria.'; return; }
       const salvo = {
-        ...l, valor, descricao: form.descricao.value.trim(), mes: form.mes.value, dia: dia || '',
+        ...l, valor, descricao: form.descricao.value.trim(), mes: mesEfetivo(), dia: dia || '',
         criadoEm: l.criadoEm || new Date().toISOString()
       };
+      if (cartao) salvo.dataCompra = form.dataCompra.value; else delete salvo.dataCompra;
       if (RECEITA) { salvo.pessoa = form.pessoa.value; salvo.tipoReceita = form.tipoReceita.value; }
       else { salvo.categoria = form.categoria.value; salvo.forma = form.forma.value; }
       if (cx && cx.checked) {

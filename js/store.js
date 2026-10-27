@@ -64,6 +64,7 @@ const STORE = (function () {
       cartoes: [],
       lancamentos: [],
       ajustesFatura: {},
+      pagamentosFatura: {},
       reserva: { meta: 20000, rendimento: 0.005, aportes: {} },
       metas: [],
       config: { metaPoupanca: 0.2 }
@@ -81,6 +82,8 @@ const STORE = (function () {
       cartoes: Array.isArray(r.cartoes) ? r.cartoes : [],
       lancamentos: Array.isArray(r.lancamentos) ? r.lancamentos : [],
       ajustesFatura: r.ajustesFatura && typeof r.ajustesFatura === 'object' ? r.ajustesFatura : {},
+      /* pagamentos de fatura: { idCartão: { 'AAAA-MM': [{ id, data, valor }] } } */
+      pagamentosFatura: r.pagamentosFatura && typeof r.pagamentosFatura === 'object' ? r.pagamentosFatura : {},
       reserva: Object.assign({}, base.reserva, r.reserva || {}, { aportes: (r.reserva && r.reserva.aportes) || {} }),
       metas: Array.isArray(r.metas) ? r.metas : [],
       config: Object.assign({}, base.config, r.config || {})
@@ -203,6 +206,107 @@ const STORE = (function () {
   }
   function fatura(cartaoId, m) {
     return gastosNaForma(cartaoId, m) + ajusteFatura(cartaoId, m);
+  }
+
+  /* ===== Ciclo do cartão (como nos bancos e em apps como Mobills/Organizze) =====
+     - A fatura "AAAA-MM" é a que VENCE naquele mês, no dia de vencimento do cartão.
+     - Ela fecha no dia de fechamento: no mesmo mês se o fechamento vem antes do vencimento
+       (ex.: fecha 3, vence 10), senão no mês anterior (ex.: fecha 28, vence 5).
+     - Compra feita ANTES do fechamento entra nessa fatura; no dia do fechamento ou depois,
+       vai para a seguinte.
+     - Sem dia de fechamento cadastrado, usa vencimento − 7 dias (o mais comum). */
+  const pad = (n) => String(n).padStart(2, '0');
+  const diasNoMes = (m) => new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0).getDate();
+  const dataNoMes = (m, dia) => `${m}-${pad(Math.min(dia, diasNoMes(m)))}`;
+  function hojeISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+  function diaFechamento(c) {
+    if (c.fechamento) return Number(c.fechamento);
+    if (c.vencimento) { const f = Number(c.vencimento) - 7; return f >= 1 ? f : f + 30; }
+    return null;
+  }
+  function temCiclo(c) { return !!(c && c.vencimento); }
+  function vencimentoFatura(c, m) { return c.vencimento ? dataNoMes(m, Number(c.vencimento)) : null; }
+  function fechamentoFatura(c, m) {
+    const f = diaFechamento(c);
+    if (!f || !c.vencimento) return null;
+    return dataNoMes(f < Number(c.vencimento) ? m : somarMes(m, -1), f);
+  }
+  /* Fatura (mês de vencimento) em que entra uma compra feita em dataISO. */
+  function faturaDaCompra(c, dataISO) {
+    const m0 = dataISO.slice(0, 7);
+    if (!temCiclo(c)) return m0;
+    for (let i = -1; i <= 2; i++) {
+      const m = somarMes(m0, i);
+      if (dataISO < fechamentoFatura(c, m)) return m;
+    }
+    return somarMes(m0, 2);
+  }
+
+  /* ===== Pagamentos de fatura e limite ===== */
+  function pagamentos(cartaoId, m) {
+    return ((dados.pagamentosFatura[cartaoId] || {})[m]) || [];
+  }
+  function pagoFatura(cartaoId, m) {
+    return pagamentos(cartaoId, m).reduce((s, p) => s + (Number(p.valor) || 0), 0);
+  }
+  function pagarFatura(cartaoId, m, valor, data) {
+    dados.pagamentosFatura[cartaoId] = dados.pagamentosFatura[cartaoId] || {};
+    (dados.pagamentosFatura[cartaoId][m] = dados.pagamentosFatura[cartaoId][m] || []).push({ id: uid('pg'), data: data || hojeISO(), valor: Math.round(valor * 100) / 100 });
+    salvar();
+  }
+  function removerPagamento(cartaoId, m, id) {
+    const lista = pagamentos(cartaoId, m).filter(p => p.id !== id);
+    if (lista.length) dados.pagamentosFatura[cartaoId][m] = lista; else if (dados.pagamentosFatura[cartaoId]) delete dados.pagamentosFatura[cartaoId][m];
+    salvar();
+  }
+  /* Meses que têm fatura (gasto, ajuste ou pagamento) neste cartão. */
+  function mesesDoCartao(cartaoId) {
+    const s = new Set(dados.lancamentos.filter(l => ehDespesa(l) && l.forma === cartaoId).map(l => l.mes));
+    Object.keys(dados.ajustesFatura[cartaoId] || {}).forEach(m => s.add(m));
+    Object.keys(dados.pagamentosFatura[cartaoId] || {}).forEach(m => s.add(m));
+    return [...s].sort();
+  }
+  function saldoFatura(cartaoId, m) {
+    return Math.max(0, Math.round((fatura(cartaoId, m) - pagoFatura(cartaoId, m)) * 100) / 100);
+  }
+  /* Situação da fatura hoje: vazia | aberta | fechada | vencida | paga. */
+  function statusFatura(c, m) {
+    const valor = fatura(c.id, m);
+    if (valor <= 0) return 'vazia';
+    if (saldoFatura(c.id, m) <= 0.004) return 'paga';
+    const hoje = hojeISO();
+    const fecha = fechamentoFatura(c, m), vence = vencimentoFatura(c, m);
+    if (!fecha) return m > hojeMes() ? 'aberta' : m === hojeMes() ? 'fechada' : 'vencida';
+    if (hoje < fecha) return 'aberta';
+    if (hoje <= vence) return 'fechada';
+    return 'vencida';
+  }
+  /* Limite: tudo o que ainda não foi pago ocupa o limite — inclusive as parcelas futuras.
+     Compra de R$ 2.000 em 10x tira R$ 2.000 do limite; cada fatura paga devolve o pago. */
+  function usoLimite(c) {
+    const hoje = hojeMes();
+    let usado = 0, futuro = 0, vencido = 0;
+    mesesDoCartao(c.id).forEach((m) => {
+      const s = saldoFatura(c.id, m);
+      usado += s;
+      if (m > hoje) futuro += s;
+      if (s > 0 && statusFatura(c, m) === 'vencida') vencido += s;
+    });
+    const limite = Number(c.limite) || 0;
+    return { limite, usado, disponivel: limite - usado, futuro, vencido, pct: limite ? usado / limite : 0 };
+  }
+  /* Faturas que já venceram e não têm pagamento registrado. */
+  function faturasVencidas(c) {
+    return mesesDoCartao(c.id).filter(m => statusFatura(c, m) === 'vencida');
+  }
+  /* "Já paguei as faturas antigas": quita todas as vencidas pelo saldo, na data do vencimento. */
+  function quitarVencidas(c) {
+    const lista = faturasVencidas(c);
+    lista.forEach(m => pagarFatura(c.id, m, saldoFatura(c.id, m), vencimentoFatura(c, m) || `${m}-01`));
+    return lista.length;
   }
 
   /* Série dos 12 meses do ano (base dos gráficos e do resumo anual). */
@@ -409,6 +513,9 @@ const STORE = (function () {
     Object.keys(dados.ajustesFatura).forEach((id) => {
       Object.keys(dados.ajustesFatura[id]).forEach((m) => { if (anoDe(m) === ano) delete dados.ajustesFatura[id][m]; });
     });
+    Object.keys(dados.pagamentosFatura).forEach((id) => {
+      Object.keys(dados.pagamentosFatura[id]).forEach((m) => { if (anoDe(m) === ano) delete dados.pagamentosFatura[id][m]; });
+    });
     dados.config.anosFechados = [...new Set([...(dados.config.anosFechados || []), ano])].sort();
     salvar();
     return antes - dados.lancamentos.length;
@@ -424,6 +531,8 @@ const STORE = (function () {
     totais, porCategoria, porPessoa, fatura, ajusteFatura, setAjusteFatura, gastosNaForma,
     serieAno, resumoAno, tabelaReserva, saldoReservaAte, calcMeta, totaisMetas,
     salvarLancamento, removerLancamento, repetirDoMes, remover, emUso,
+    hojeISO, diaFechamento, temCiclo, fechamentoFatura, vencimentoFatura, faturaDaCompra,
+    pagamentos, pagoFatura, pagarFatura, removerPagamento, saldoFatura, statusFatura, usoLimite, faturasVencidas, quitarVencidas, mesesDoCartao,
     lancarParcelado, parcelasDoGrupo, removerParcelasDesde, comprasParceladas, compraParecida, removerCompra, lancamentoParecido
   };
 })();
