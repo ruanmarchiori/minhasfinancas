@@ -109,5 +109,11 @@ pagamentos), reserva (aportes e saldo), pessoas e categorias. Importar esse arqu
 
 ## Publicar (GitHub Pages)
 
-Repositório público → Settings → Pages → Branch `main` / `(root)`. Ao mudar CSS/JS, aumente o
-`?v=` nos `<script>`/`<link>` dos HTML para o navegador não usar a versão antiga.
+App no ar: **https://ruanmarchiori.github.io/finan-as/** (repositório `ruanmarchiori/finan-as`).
+
+- `main`: código-fonte (este repositório).
+- `gh-pages`: só os arquivos do app, gerados por `node ferramentas/preparar-publicacao.js`
+  (pasta `../Financas-para-publicar`) e enviados com `git push -f` para o ramo `gh-pages`.
+
+Ao mudar o código: subir `VERSAO` no `sw.js` e o `?v=` dos HTML, gerar a pasta e publicar
+de novo. O iPhone atualiza sozinho na próxima abertura com internet; os dados não são afetados.
